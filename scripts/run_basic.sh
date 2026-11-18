@@ -2,7 +2,7 @@
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-GPU_ID="${GPU_ID:-2}"
+GPU_ID="${GPU_ID:-0}"
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES="$GPU_ID"
 export CUBLAS_WORKSPACE_CONFIG=:4096:8

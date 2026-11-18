@@ -32,6 +32,8 @@ def parser():
             command.add_argument("--run-name", default="cifarcnn")
     plotting = commands.add_parser("plot")
     plotting.add_argument("--run-dir", type=Path, required=True)
+    plotting.add_argument("--figures-dir", type=Path)
+    plotting.add_argument("--split", choices=("val", "test"), default="test")
     download = commands.add_parser("download")
     download.add_argument("--config", type=Path, default=ROOT / "config" / "basic.json")
     download.add_argument("--data-dir", type=Path)
@@ -53,7 +55,7 @@ def load_config(args):
         config["data"]["root"] = str(args.data_dir.resolve())
     if args.no_download:
         config["data"]["download"] = False
-    for section, key in (("data", "root"), ("output", "results_root"), ("output", "figures_root")):
+    for section, key in (("data", "root"), ("output", "results_root")):
         path = Path(config[section][key])
         config[section][key] = str((ROOT / path).resolve() if not path.is_absolute() else path.resolve())
     validate_config(config)
@@ -111,7 +113,11 @@ def validate_config(config):
         number(safety[key], key, minimum)
     if safety["reserve_fraction"] >= 1:
         raise ValueError("reserve_fraction must be smaller than one")
-    integer(config["output"]["misclassified_count"], "misclassified_count")
+    for key, default in (("error_examples_per_group", 4), ("cam_classes", 2),
+                         ("calibration_bins", 10), ("top_confusions", 5)):
+        integer(config["output"].get(key, default), key)
+    if config["output"].get("cam_classes", 2) > 10:
+        raise ValueError("cam_classes must not exceed ten")
     integer(config["output"]["figure_dpi"], "figure_dpi")
 
 
@@ -121,7 +127,7 @@ def main():
     try:
         if args.command == "plot":
             from visualization import plot_results
-            plot_results(args.run_dir)
+            plot_results(args.run_dir, figures_root=args.figures_dir, split=args.split)
             return 0
         config = load_config(args)
         if args.command == "download":

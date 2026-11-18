@@ -81,7 +81,7 @@ def prepare_data(options):
                        .format(root, "\n".join(errors)))
 
 
-def stratified_split(targets, root, seed=42, val_size=5000):
+def stratified_split(targets, root, seed=42, val_size=5000, index_path=None):
     targets = np.asarray(targets, dtype=np.int64)
     if targets.shape != (50000,) or not np.array_equal(
             np.bincount(targets, minlength=10), np.full(10, 5000)):
@@ -90,7 +90,9 @@ def stratified_split(targets, root, seed=42, val_size=5000):
         raise ValueError("The basic experiment fixes split_seed=42 and val_size=5000")
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
-    path = root / "split_seed42.npz"
+    path = Path(index_path) if index_path is not None else root / "split_seed42.npz"
+    if index_path is not None and not path.is_file():
+        raise FileNotFoundError(path)
     digest = hashlib.sha256(targets.tobytes()).hexdigest()
     rng = np.random.default_rng(seed)
     train, val = [], []
@@ -174,3 +176,18 @@ def test_data(config):
             transforms.ToTensor(), transforms.Normalize(options["mean"], options["std"]),
         ]))
     return dataset, make_loader(dataset, config)
+
+
+def evaluation_data(config, index_path):
+    from torchvision import datasets, transforms
+
+    options = config["data"]
+    prepare_data(options)
+    dataset = datasets.CIFAR10(
+        options["root"], train=True, download=False,
+        transform=transforms.Compose([
+            transforms.ToTensor(), transforms.Normalize(options["mean"], options["std"]),
+        ]))
+    train, val, _ = stratified_split(dataset.targets, options["root"], index_path=index_path)
+    return (make_loader(Subset(dataset, train.tolist()), config),
+            make_loader(Subset(dataset, val.tolist()), config))

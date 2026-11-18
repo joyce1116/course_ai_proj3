@@ -6,6 +6,7 @@ import json
 import os
 import platform
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -18,7 +19,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from data import CLASSES, test_data, training_data
+from data import CLASSES, evaluation_data, test_data, training_data
 from models.cnn import CifarCNN
 from visualization import plot_results
 
@@ -27,7 +28,8 @@ GIB = 1024 ** 3
 HISTORY_FIELDS = ["epoch", "train_loss", "train_accuracy", "val_loss", "val_accuracy",
                   "train_samples", "val_samples", "seconds", "lr"]
 PREDICTION_FIELDS = ["sample_index", "true_label", "true_class", "predicted_label",
-                     "predicted_class", "confidence"]
+                     "predicted_class", "confidence", "correct", "true_class_probability",
+                     "cross_entropy", "top2_margin"]
 
 
 def write_json(path, value):
@@ -37,6 +39,39 @@ def write_json(path, value):
         json.dump(value, stream, indent=2, ensure_ascii=False, allow_nan=False)
         stream.write("\n")
     os.replace(temporary, path)
+
+
+def write_npz(path, values):
+    temporary = path.with_name(path.name + ".tmp")
+    with temporary.open("wb") as stream:
+        np.savez_compressed(stream, **values)
+    os.replace(temporary, path)
+
+
+def record_reproducibility(directory, config, model, split_info):
+    source_root = Path(__file__).resolve().parent
+    files = ("run.py", "data.py", "experiment.py", "visualization.py", "models/cnn.py",
+             "config/basic.json", "scripts/run_basic.sh", "requirements.txt")
+    initial_state = hashlib.sha256()
+    for name, value in model.state_dict().items():
+        initial_state.update(name.encode("utf-8"))
+        initial_state.update(value.detach().cpu().contiguous().numpy().tobytes())
+    write_json(directory / "reproducibility.json", {
+        "seed": config["seed"], "split_seed": config["data"]["split_seed"],
+        "loader_generator_seed": config["seed"],
+        "worker_seed": "torch.initial_seed() modulo 2**32 for NumPy and Python random",
+        "deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
+        "cudnn_deterministic": torch.backends.cudnn.deterministic,
+        "cudnn_benchmark": torch.backends.cudnn.benchmark,
+        "cuda_matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
+        "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
+        "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+        "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
+        "initial_state_sha256": initial_state.hexdigest(),
+        "split_file": "split_indices.npz", "split_sha256": split_info["file_sha256"],
+        "source_sha256": {name: hashlib.sha256((source_root / name).read_bytes()).hexdigest()
+                          for name in files},
+    })
 
 
 def new_directory(root, prefix):
@@ -277,80 +312,278 @@ def load_best(directory):
     return model.to("cuda:0").eval(), checkpoint
 
 
-def select_misclassified(images, targets, predictions, confidence, limit):
-    groups = [list(np.flatnonzero((targets == label) & (targets != predictions)))
-              for label in range(10)]
-    groups = [sorted(group, key=lambda index: (-confidence[index], index)) for group in groups]
-    indices = []
-    for rank in range(max((len(group) for group in groups), default=0)):
-        for group in groups:
-            if rank < len(group):
-                indices.append(group[rank])
-                if len(indices) == limit:
-                    break
-        if len(indices) == limit:
-            break
-    indices = np.asarray(indices, dtype=np.int64)
-    return {"images": images[indices], "sample_index": indices,
-            "true_label": targets[indices], "predicted_label": predictions[indices],
-            "confidence": confidence[indices]}
+def classification_metrics(targets, logits, bins, top_confusions):
+    shifted = logits.astype(np.float64) - logits.max(axis=1, keepdims=True)
+    log_probabilities = shifted - np.log(np.exp(shifted).sum(axis=1, keepdims=True))
+    probabilities = np.exp(log_probabilities)
+    predictions = probabilities.argmax(axis=1)
+    confidence = probabilities.max(axis=1)
+    correct = predictions == targets
+    losses = -log_probabilities[np.arange(len(targets)), targets]
+    ordered = np.sort(probabilities, axis=1)
+    confusion = np.zeros((10, 10), dtype=np.int64)
+    np.add.at(confusion, (targets, predictions), 1)
+    support = confusion.sum(axis=1)
+    predicted_count = confusion.sum(axis=0)
+    diagonal = confusion.diagonal()
+    precision = np.divide(diagonal, predicted_count, out=np.zeros(10), where=predicted_count > 0)
+    recall = np.divide(diagonal, support, out=np.zeros(10), where=support > 0)
+    f1 = np.divide(2 * precision * recall, precision + recall,
+                   out=np.zeros(10), where=precision + recall > 0)
+    calibration = []
+    bin_index = np.minimum((confidence * bins).astype(np.int64), bins - 1)
+    ece = 0.0
+    for index in range(bins):
+        selected = bin_index == index
+        count = int(selected.sum())
+        accuracy = float(correct[selected].mean()) if count else None
+        mean_confidence = float(confidence[selected].mean()) if count else None
+        if count:
+            ece += count / len(targets) * abs(accuracy - mean_confidence)
+        calibration.append({"lower": index / bins, "upper": (index + 1) / bins,
+                            "count": count, "accuracy": accuracy, "confidence": mean_confidence})
+    pairs = sorted(((-int(confusion[true, predicted]), true, predicted)
+                    for true in range(10) for predicted in range(10)
+                    if true != predicted and confusion[true, predicted] > 0))
+    errors = int((~correct).sum())
+    metrics = {
+        "samples": len(targets), "loss": float(losses.mean()), "accuracy": float(correct.mean()),
+        "macro_precision": float(precision.mean()), "macro_recall": float(recall.mean()),
+        "macro_f1": float(f1.mean()), "error_count": errors,
+        "mean_confidence": float(confidence.mean()),
+        "correct_mean_confidence": float(confidence[correct].mean()) if correct.any() else None,
+        "wrong_mean_confidence": float(confidence[~correct].mean()) if errors else None,
+        "wrong_with_confidence_at_least_0.9": int(((~correct) & (confidence >= 0.9)).sum()),
+        "wrong_with_confidence_at_least_0.99": int(((~correct) & (confidence >= 0.99)).sum()),
+        "ece": float(ece), "calibration": calibration,
+        "multiclass_brier": float((np.square(probabilities).sum(axis=1)
+                                    - 2 * probabilities[np.arange(len(targets)), targets] + 1).mean()),
+        "multiclass_brier_reduction": "mean over samples of the sum over ten classes",
+        "per_class_accuracy": dict(zip(CLASSES, recall.tolist())),
+        "per_class_samples": dict(zip(CLASSES, support.tolist())),
+        "per_class": {label: {"support": int(support[index]),
+                               "predicted_count": int(predicted_count[index]),
+                               "correct": int(diagonal[index]), "precision": float(precision[index]),
+                               "recall": float(recall[index]), "f1": float(f1[index])}
+                      for index, label in enumerate(CLASSES)},
+        "confusion_matrix": confusion.tolist(),
+        "confusion_rows": "true labels", "confusion_columns": "predicted labels",
+        "top_confusions": [{"true_label": true, "predicted_label": predicted,
+                             "true_class": CLASSES[true], "predicted_class": CLASSES[predicted],
+                             "count": -negative_count,
+                             "fraction_of_all_errors": -negative_count / errors,
+                             "fraction_of_true_class": -negative_count / int(support[true])}
+                            for negative_count, true, predicted in pairs[:top_confusions]],
+    }
+    details = {"predicted_label": predictions, "confidence": confidence, "correct": correct,
+               "true_class_probability": probabilities[np.arange(len(targets)), targets],
+               "cross_entropy": losses, "top2_margin": ordered[:, -1] - ordered[:, -2]}
+    return metrics, details
 
 
 @torch.inference_mode()
-def evaluate_test(directory, config):
-    for filename in ("test_predictions.csv", "test_metrics.json", "misclassified_samples.npz"):
-        if (directory / filename).exists():
-            raise FileExistsError("Refusing to overwrite final test output: " + filename)
-    model, checkpoint = load_best(directory)
-    dataset, loader = test_data(config)
-    true_labels, predicted_labels, confidences = [], [], []
-    loss_sum = 0.0
-    for inputs, labels in loader:
-        logits = model(inputs.to("cuda:0", non_blocking=True))
-        labels_device = labels.to("cuda:0", non_blocking=True)
-        loss_sum += nn.functional.cross_entropy(logits, labels_device, reduction="sum").item()
-        confidence, predictions = logits.softmax(1).max(1)
-        true_labels.append(labels.numpy())
-        predicted_labels.append(predictions.cpu().numpy())
-        confidences.append(confidence.cpu().numpy())
-    targets = np.concatenate(true_labels)
-    predictions = np.concatenate(predicted_labels)
-    confidence = np.concatenate(confidences)
-    if len(targets) != 10000 or not np.array_equal(targets, np.asarray(dataset.targets)):
-        raise RuntimeError("Expected all 10,000 test images in official index order")
-    confusion = np.zeros((10, 10), dtype=np.int64)
-    np.add.at(confusion, (targets, predictions), 1)
-    per_class = confusion.diagonal() / confusion.sum(axis=1)
-    metrics = {
-        "test_samples": len(targets), "test_loss": loss_sum / len(targets),
-        "test_accuracy": float(np.mean(targets == predictions)),
-        "accuracy_scale": "fraction in [0,1]", "confidence_definition": "maximum softmax probability",
-        "sample_index_definition": "zero-based index in the official test set",
-        "best_epoch": checkpoint["epoch"], "best_val_accuracy": checkpoint["val_accuracy"],
-        "best_checkpoint_sha256": hashlib.sha256((directory / "best.pt").read_bytes()).hexdigest(),
-        "class_names": list(CLASSES),
-        "per_class_accuracy": dict(zip(CLASSES, per_class.tolist())),
-        "per_class_samples": dict(zip(CLASSES, confusion.sum(axis=1).tolist())),
-        "confusion_matrix": confusion.tolist(),
-        "confusion_rows": "true labels", "confusion_columns": "predicted labels",
-        "misclassified_selection": "descending confidence within each true class, class round-robin",
+def collect_outputs(model, loader, with_cams):
+    dataset = loader.dataset
+    base_dataset = dataset.dataset if hasattr(dataset, "indices") else dataset
+    indices = np.asarray(dataset.indices if hasattr(dataset, "indices")
+                         else np.arange(len(dataset)), dtype=np.int64)
+    outputs, targets, true_cams, predicted_cams = [], [], [], []
+    activation = {}
+
+    def keep_maps(_module, _inputs, output):
+        activation["maps"] = output
+
+    handle = model.head[2].register_forward_hook(keep_maps) if with_cams else None
+    model.eval()
+    try:
+        for inputs, labels in loader:
+            inputs = inputs.to("cuda:0", non_blocking=True)
+            device_labels = labels.to("cuda:0", non_blocking=True)
+            logits = model(inputs)
+            if not torch.isfinite(logits).all():
+                raise RuntimeError("Non-finite evaluation logits")
+            outputs.append(logits.cpu().numpy())
+            targets.append(labels.numpy().copy())
+            if with_cams:
+                maps = activation.pop("maps")
+                weights = model.head[-1].weight
+                true_cams.append(torch.einsum("bc,bchw->bhw", weights[device_labels], maps).cpu().numpy())
+                predicted_cams.append(torch.einsum(
+                    "bc,bchw->bhw", weights[logits.argmax(1)], maps).cpu().numpy())
+    finally:
+        if handle is not None:
+            handle.remove()
+    targets, logits = np.concatenate(targets), np.concatenate(outputs)
+    if (len(targets) != len(dataset) or len(np.unique(indices)) != len(indices)
+            or not np.array_equal(targets, np.asarray(base_dataset.targets)[indices])):
+        raise RuntimeError("Evaluation sample indices and labels are inconsistent")
+    cams = (np.stack([np.concatenate(true_cams), np.concatenate(predicted_cams)], axis=1)
+            if with_cams else None)
+    return indices, targets, logits, cams, base_dataset
+
+
+def select_examples(base_dataset, indices, targets, details, cams, metrics, config):
+    predictions, confidence = details["predicted_label"], details["confidence"]
+    wrong = np.flatnonzero(~details["correct"])
+    per_group = config["output"].get("error_examples_per_group", 4)
+    rng = np.random.default_rng(config["seed"])
+    selected, group_names, used = [], [], set()
+
+    def add(positions, name):
+        for position in positions:
+            position = int(position)
+            if position not in used:
+                selected.append(position)
+                group_names.append(name)
+                used.add(position)
+
+    add(rng.permutation(wrong)[:per_group], "Random errors")
+    frequent = []
+    for pair in metrics["top_confusions"]:
+        candidates = np.flatnonzero((targets == pair["true_label"])
+                                     & (predictions == pair["predicted_label"]))
+        candidates = np.asarray([position for position in candidates if int(position) not in used])
+        if len(candidates):
+            median = np.median(confidence[candidates])
+            frequent.append(candidates[np.argmin(np.abs(confidence[candidates] - median))])
+        if len(frequent) >= per_group:
+            break
+    add(frequent, "Frequent confusions")
+    ranked_wrong = sorted(wrong, key=lambda position: (-confidence[position], indices[position]))
+    add([position for position in ranked_wrong if int(position) not in used][:per_group],
+        "High-confidence errors")
+    errors_by_class = np.bincount(targets[wrong], minlength=10)
+    cam_pairs = []
+    for label in np.argsort(-errors_by_class, kind="stable"):
+        good = np.flatnonzero((targets == label) & details["correct"])
+        bad = np.flatnonzero((targets == label) & ~details["correct"])
+        if len(good) and len(bad):
+            pair = [int(group[np.argmin(np.abs(confidence[group] - np.median(confidence[group])))])
+                    for group in (good, bad)]
+            cam_pairs.append(pair)
+        if len(cam_pairs) >= config["output"].get("cam_classes", 2):
+            break
+    positions = np.unique(np.asarray(selected + [item for pair in cam_pairs for item in pair],
+                                     dtype=np.int64))
+    lookup = {int(position): index for index, position in enumerate(positions)}
+    cache = {
+        "images": base_dataset.data[indices[positions]], "sample_index": indices[positions],
+        "true_label": targets[positions], "predicted_label": predictions[positions],
+        "confidence": confidence[positions], "cam_true": cams[positions, 0],
+        "cam_predicted": cams[positions, 1],
+        "error_cache_index": np.asarray([lookup[position] for position in selected], dtype=np.int64),
+        "error_group": np.asarray(group_names, dtype="U32"),
+        "cam_pairs": np.asarray([[lookup[item] for item in pair] for pair in cam_pairs],
+                                dtype=np.int64).reshape(-1, 2),
     }
-    with (directory / "test_predictions.csv").open("x", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=PREDICTION_FIELDS)
-        writer.writeheader()
-        for index, (true, predicted, score) in enumerate(zip(targets, predictions, confidence)):
-            writer.writerow(dict(zip(PREDICTION_FIELDS, (
-                index, int(true), CLASSES[true], int(predicted), CLASSES[predicted], float(score)))))
-    samples = select_misclassified(dataset.data, targets, predictions, confidence,
-                                  config["output"]["misclassified_count"])
-    with (directory / "misclassified_samples.npz").open("xb") as stream:
-        np.savez_compressed(stream, **samples)
-    write_json(directory / "test_metrics.json", metrics)
-    print("Best epoch: {}; test accuracy: {:.2%}".format(checkpoint["epoch"], metrics["test_accuracy"]),
-          flush=True)
-    for label, accuracy in metrics["per_class_accuracy"].items():
-        print("{}: {:.2%}".format(label, accuracy), flush=True)
+    return cache
+
+
+def evaluate_split(model, loader, directory, split, checkpoint, checkpoint_hash, config):
+    metric_path = directory / (split + "_metrics.json")
+    exported = split != "train_eval"
+    artifacts = [directory / (split + suffix) for suffix in
+                 ("_predictions.csv", "_outputs.npz", "_examples.npz")] if exported else []
+    if metric_path.exists():
+        existing = json.loads(metric_path.read_text(encoding="utf-8"))
+        if (existing.get("schema_version") != 2
+                or existing.get("best_checkpoint_sha256") != checkpoint_hash):
+            raise FileExistsError("Existing evaluation belongs to another schema/checkpoint: " + str(metric_path))
+        if not all(path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest()
+                   == existing.get("artifact_sha256", {}).get(path.name) for path in artifacts):
+            raise RuntimeError("Cached evaluation artifacts are missing or modified: " + split)
+        print("Reusing completed evaluation:", split, flush=True)
+        return existing
+    print("Evaluating best checkpoint:", split, flush=True)
+    indices, targets, logits, cams, base_dataset = collect_outputs(model, loader, exported)
+    expected = {"train_eval": 45000, "val": 5000, "test": 10000}[split]
+    if len(indices) != expected:
+        raise RuntimeError("Unexpected evaluation sample count: " + split)
+    metrics, details = classification_metrics(
+        targets, logits, config["output"].get("calibration_bins", 10),
+        config["output"].get("top_confusions", 5))
+    metrics.update({
+        "schema_version": 2, "split": split, "class_names": list(CLASSES),
+        split + "_samples": len(targets), split + "_loss": metrics["loss"],
+        split + "_accuracy": metrics["accuracy"], "accuracy_scale": "fraction in [0,1]",
+        "confidence_definition": "maximum softmax probability",
+        "sample_index_definition": "zero-based index in the official "
+                                   + ("test" if split == "test" else "training") + " set",
+        "evaluation_mode": "eval, no gradients, no augmentation, all samples retained",
+        "best_epoch": checkpoint["epoch"], "best_val_accuracy": checkpoint["val_accuracy"],
+        "best_checkpoint_sha256": checkpoint_hash,
+        "calibration_binning": "equal-width confidence bins; left-closed, final bin includes 1",
+        "artifact_sha256": {},
+    })
+    if exported:
+        csv_path, raw_path, examples_path = artifacts
+        temporary = csv_path.with_name(csv_path.name + ".tmp")
+        with temporary.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=PREDICTION_FIELDS)
+            writer.writeheader()
+            for row, sample_index in enumerate(indices):
+                true, predicted = int(targets[row]), int(details["predicted_label"][row])
+                values = [int(sample_index), true, CLASSES[true], predicted, CLASSES[predicted],
+                          float(details["confidence"][row]), bool(details["correct"][row]),
+                          float(details["true_class_probability"][row]),
+                          float(details["cross_entropy"][row]), float(details["top2_margin"][row])]
+                writer.writerow(dict(zip(PREDICTION_FIELDS, values)))
+        os.replace(temporary, csv_path)
+        write_npz(raw_path, {"sample_index": indices, "true_label": targets, "logits": logits})
+        cache = select_examples(base_dataset, indices, targets, details, cams, metrics, config)
+        write_npz(examples_path, cache)
+        metrics["example_selection"] = {
+            "seed": config["seed"], "error_groups_disjoint": True,
+            "random_errors": "uniform sample without replacement",
+            "frequent_confusions": "median-confidence error from each leading directed confusion pair",
+            "high_confidence_errors": "highest-confidence errors remaining after other groups",
+            "cam_pairs": "correct/error pair from each highest-error true class; median confidence within each group",
+            "cam_feature_shape": [config["model"]["head_channels"], 4, 4],
+            "cam_values": "signed class-weighted activation sum before display ReLU and normalization",
+        }
+        metrics["artifact_sha256"] = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                                      for path in artifacts}
+    write_json(metric_path, metrics)
+    print("{}: loss {:.4f}; accuracy {:.2%}; macro F1 {:.4f}; ECE {:.4f}".format(
+        split, metrics["loss"], metrics["accuracy"], metrics["macro_f1"], metrics["ece"]), flush=True)
+    if split == "test":
+        for label, accuracy in metrics["per_class_accuracy"].items():
+            print("{}: {:.2%}".format(label, accuracy), flush=True)
     return metrics
+
+
+def evaluate_best(directory, config):
+    for split in ("val", "test"):
+        path = directory / (split + "_metrics.json")
+        if path.exists() and json.loads(path.read_text(encoding="utf-8")).get("schema_version") != 2:
+            raise FileExistsError("Preserving existing legacy evaluation: " + str(path))
+    split_path = directory / "split_indices.npz"
+    if not split_path.exists():
+        source = Path(config["data"]["root"]) / "split_seed42.npz"
+        if not source.is_file():
+            raise FileNotFoundError("Restore the original split indices before evaluation: " + str(source))
+        shutil.copyfile(source, split_path)
+    model, checkpoint = load_best(directory)
+    checkpoint_hash = hashlib.sha256((directory / "best.pt").read_bytes()).hexdigest()
+    train_loader, val_loader = evaluation_data(config, split_path)
+    train_metrics = evaluate_split(model, train_loader, directory, "train_eval",
+                                   checkpoint, checkpoint_hash, config)
+    del train_loader
+    val_metrics = evaluate_split(model, val_loader, directory, "val", checkpoint, checkpoint_hash, config)
+    del val_loader
+    _, test_loader = test_data(config)
+    test_metrics = evaluate_split(model, test_loader, directory, "test", checkpoint, checkpoint_hash, config)
+    summary = {
+        "best_epoch": checkpoint["epoch"], "best_checkpoint_sha256": checkpoint_hash,
+        "evaluation_mode": "same best checkpoint; eval mode; no augmentation; all samples",
+        "train_val_accuracy_gap": train_metrics["accuracy"] - val_metrics["accuracy"],
+        "val_accuracy_matches_checkpoint": abs(val_metrics["accuracy"] - checkpoint["val_accuracy"]) < 1e-12,
+    }
+    for split, metrics in (("train_eval", train_metrics), ("val", val_metrics), ("test", test_metrics)):
+        summary[split] = {key: metrics[key] for key in
+                          ("samples", "loss", "accuracy", "macro_f1", "ece", "multiclass_brier")}
+    write_json(directory / "best_model_metrics.json", summary)
+    return test_metrics
 
 
 def failure_status(directory, exc):
@@ -367,14 +600,19 @@ def train(config, run_name):
     write_json(directory / "config.json", config)
     write_json(directory / "status.json", {"status": "checking_gpu"})
     print("Results:", directory, flush=True)
+    training_completed = False
     try:
         if not gpu_preflight(config, directory):
             write_json(directory / "status.json", {"status": "blocked_by_gpu_preflight"})
             return 2
         seed_everything(config["seed"])
         train_loader, val_loader, split_info = training_data(config)
+        shutil.copyfile(split_info["path"], directory / "split_indices.npz")
+        split_info["source_path"] = split_info["path"]
+        split_info["path"] = "split_indices.npz"
         write_json(directory / "split.json", split_info)
         model = CifarCNN(**config["model"]).to("cuda:0")
+        record_reproducibility(directory, config, model, split_info)
         optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["lr"],
                                      weight_decay=config["training"]["weight_decay"],
                                      foreach=False)
@@ -402,18 +640,26 @@ def train(config, run_name):
         del model, optimizer, train_loader, val_loader
         gc.collect()
         torch.cuda.empty_cache()
-        write_json(directory / "status.json", {"status": "final_test"})
-        evaluate_test(directory, config)
-        write_json(directory / "status.json", {"status": "completed"})
+        training_completed = True
+        write_json(directory / "status.json", {"status": "evaluating_best"})
+        evaluate_best(directory, config)
+        write_json(directory / "status.json", {"status": "evaluation_completed"})
     except Exception as exc:
         failure_status(directory, exc)
+        if training_completed:
+            print("Training is complete. Resume evaluation with run.py test --run-dir "
+                  + str(directory) + "; no retraining is needed.", file=sys.stderr, flush=True)
         return 1
     try:
+        write_json(directory / "status.json", {"status": "plotting"})
         plot_results(directory)
     except Exception as exc:
         write_json(directory / "plot_error.json", {"error": str(exc)})
+        write_json(directory / "status.json", {"status": "plotting_failed",
+                                               "training_completed": True, "evaluation_completed": True})
         print("Training and test completed; plotting failed: " + str(exc), file=sys.stderr)
         return 1
+    write_json(directory / "status.json", {"status": "completed"})
     return 0
 
 
@@ -421,16 +667,13 @@ def test_only(directory, config):
     directory = Path(directory).resolve()
     if not (directory / "best.pt").is_file():
         raise FileNotFoundError(directory / "best.pt")
-    for filename in ("test_predictions.csv", "test_metrics.json", "misclassified_samples.npz"):
-        if (directory / filename).exists():
-            raise FileExistsError("Final test outputs already exist; use plot to replot")
     check_directory = new_directory(directory, "test_gpu_check")
     write_json(check_directory / "config.json", config)
     try:
         if not gpu_preflight(config, check_directory):
             return 2
         seed_everything(config["seed"])
-        evaluate_test(directory, config)
+        evaluate_best(directory, config)
     except Exception as exc:
         failure_status(check_directory, exc)
         return 1

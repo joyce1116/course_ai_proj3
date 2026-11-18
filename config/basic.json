@@ -40,7 +40,10 @@
   "output": {
     "results_root": "results/basic",
     "figures_root": "figures/basic",
-    "misclassified_count": 16,
+    "error_examples_per_group": 4,
+    "cam_classes": 2,
+    "calibration_bins": 10,
+    "top_confusions": 5,
     "figure_dpi": 180
   }
 }
