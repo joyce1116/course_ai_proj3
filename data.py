@@ -1,5 +1,7 @@
 import hashlib
 import random
+import shutil
+import subprocess
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +11,74 @@ from torch.utils.data import DataLoader, Subset
 
 CLASSES = ("airplane", "automobile", "bird", "cat", "deer", "dog", "frog",
            "horse", "ship", "truck")
+
+
+def prepare_data(options):
+    from torchvision.datasets import CIFAR10
+    from torchvision.datasets.utils import check_integrity, download_and_extract_archive, extract_archive
+
+    root = Path(options["root"])
+    root.mkdir(parents=True, exist_ok=True)
+    files = CIFAR10.train_list + CIFAR10.test_list + [
+        [CIFAR10.meta["filename"], CIFAR10.meta["md5"]]]
+
+    def ready():
+        return all(check_integrity(root / CIFAR10.base_folder / name, checksum)
+                   for name, checksum in files)
+
+    if ready():
+        print("CIFAR-10 files verified:", root, flush=True)
+        return
+    if not options["download"]:
+        raise RuntimeError("CIFAR-10 files are missing or corrupted in {}. "
+                           "Extract cifar-10-python.tar.gz there or enable download.".format(root))
+    archive = root / CIFAR10.filename
+    if check_integrity(archive, CIFAR10.tgz_md5):
+        extract_archive(str(archive), str(root))
+        if ready():
+            print("Local CIFAR-10 archive extracted and verified:", root, flush=True)
+            return
+    urls = options.get("download_urls", [
+        "https://cave.cs.toronto.edu/kriz/cifar-10-python.tar.gz", CIFAR10.url])
+    curl = shutil.which("curl")
+    errors = []
+    for url in urls:
+        try:
+            print("Downloading CIFAR-10 with torchvision:", url, flush=True)
+            download_and_extract_archive(url, str(root), filename=CIFAR10.filename,
+                                         md5=CIFAR10.tgz_md5)
+            if not ready():
+                raise RuntimeError("Extracted CIFAR-10 files failed checksum verification")
+            return
+        except Exception as exc:
+            errors.append("torchvision {}: {}".format(url, exc))
+            print("torchvision download failed:", exc, flush=True)
+        if curl is None:
+            continue
+        partial = archive.with_name(archive.name + ".part")
+        try:
+            print("Retrying CIFAR-10 download with curl:", url, flush=True)
+            subprocess.run([
+                curl, "--fail", "--location", "--proto", "=https", "--proto-redir", "=https",
+                "--retry", "2", "--retry-delay", "2", "--connect-timeout", "20",
+                "--max-time", "300", "--output", str(partial), url,
+            ], check=True, timeout=960)
+            if not check_integrity(partial, CIFAR10.tgz_md5):
+                raise RuntimeError("Downloaded archive failed MD5 verification")
+            partial.replace(archive)
+            extract_archive(str(archive), str(root))
+            if not ready():
+                raise RuntimeError("Extracted CIFAR-10 files failed checksum verification")
+            return
+        except Exception as exc:
+            errors.append("curl {}: {}".format(url, exc))
+            print("curl download failed:", exc, flush=True)
+        finally:
+            if partial.exists():
+                partial.unlink()
+    raise RuntimeError("Automatic CIFAR-10 download failed. Download cifar-10-python.tar.gz "
+                       "manually into {} and rerun; the archive will be verified and extracted.\n{}"
+                       .format(root, "\n".join(errors)))
 
 
 def stratified_split(targets, root, seed=42, val_size=5000):
@@ -75,6 +145,7 @@ def training_data(config):
     from torchvision import datasets, transforms
 
     options = config["data"]
+    prepare_data(options)
     normal = transforms.Normalize(options["mean"], options["std"])
     train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=options["crop_padding"]),
@@ -83,7 +154,7 @@ def training_data(config):
     ])
     eval_transform = transforms.Compose([transforms.ToTensor(), normal])
     train_data = datasets.CIFAR10(options["root"], train=True,
-                                 download=options["download"], transform=train_transform)
+                                 download=False, transform=train_transform)
     val_data = datasets.CIFAR10(options["root"], train=True,
                                download=False, transform=eval_transform)
     train, val, split_info = stratified_split(
@@ -96,8 +167,9 @@ def test_data(config):
     from torchvision import datasets, transforms
 
     options = config["data"]
+    prepare_data(options)
     dataset = datasets.CIFAR10(
-        options["root"], train=False, download=options["download"],
+        options["root"], train=False, download=False,
         transform=transforms.Compose([
             transforms.ToTensor(), transforms.Normalize(options["mean"], options["std"]),
         ]))

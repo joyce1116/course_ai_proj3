@@ -10,8 +10,6 @@ venv/
 .vscode/
 .idea/
 dataset/
-results/
-figures/
 *.pt
 *.pth
 *.log

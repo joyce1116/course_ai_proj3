@@ -32,6 +32,10 @@ def parser():
             command.add_argument("--run-name", default="cifarcnn")
     plotting = commands.add_parser("plot")
     plotting.add_argument("--run-dir", type=Path, required=True)
+    download = commands.add_parser("download")
+    download.add_argument("--config", type=Path, default=ROOT / "config" / "basic.json")
+    download.add_argument("--data-dir", type=Path)
+    download.set_defaults(no_download=False)
     return main
 
 
@@ -96,6 +100,10 @@ def validate_config(config):
         raise ValueError("horizontal_flip_probability must be in [0,1]")
     if not isinstance(data["download"], bool):
         raise ValueError("download must be a boolean")
+    urls = data.get("download_urls", [])
+    if "download_urls" in data and (not isinstance(urls, list) or not urls or any(
+            not isinstance(url, str) or not url.startswith("https://") for url in urls)):
+        raise ValueError("download_urls must be a non-empty list of HTTPS URLs")
     safety = config["safety"]
     for key, minimum in (("activation_memory_multiplier", 6), ("workspace_gib", 1),
                          ("context_gib", 0.5), ("reserve_fraction", 0.2),
@@ -116,6 +124,10 @@ def main():
             plot_results(args.run_dir)
             return 0
         config = load_config(args)
+        if args.command == "download":
+            from data import prepare_data
+            prepare_data(config["data"])
+            return 0
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = str(config["gpu"])
         os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
