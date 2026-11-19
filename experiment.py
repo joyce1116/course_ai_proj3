@@ -20,7 +20,7 @@ import torch
 from torch import nn
 
 from data import CLASSES, evaluation_data, test_data, training_data
-from models.cnn import CifarCNN
+from models.ablations import EXPERIMENTS, build_model
 from visualization import plot_results
 
 
@@ -52,6 +52,8 @@ def record_reproducibility(directory, config, model, split_info):
     source_root = Path(__file__).resolve().parent
     files = ("run.py", "data.py", "experiment.py", "visualization.py", "models/cnn.py",
              "config/basic.json", "scripts/run_basic.sh", "requirements.txt")
+    if "ablation" in config:
+        files += ("models/ablations.py", "scripts/run_ablations.py")
     initial_state = hashlib.sha256()
     for name, value in model.state_dict().items():
         initial_state.update(name.encode("utf-8"))
@@ -137,10 +139,10 @@ def environment_info():
 
 
 def model_info(config):
-    model = CifarCNN(**config["model"])
+    model = build_model(config)
     channels = config["model"]["channels"]
     head_channels = config["model"]["head_channels"]
-    return {
+    spec = {
         "name": "CifarCNN",
         "parameters": sum(parameter.numel() for parameter in model.parameters()),
         "trainable_parameters": sum(parameter.numel() for parameter in model.parameters()
@@ -156,6 +158,22 @@ def model_info(config):
             "logits": ["B", config["model"]["num_classes"]],
         },
     }
+    if "ablation" in config:
+        experiment = config["ablation"]["experiment"]
+        multiscale, attention = EXPERIMENTS[experiment]
+        size = 8 if multiscale else 4
+        spec["name"] = "CifarCNN_" + experiment
+        spec["multiscale_fusion"] = multiscale
+        spec["spatial_attention"] = attention
+        spec["shapes"]["pre_pool"] = ["B", head_channels, size, size]
+        if multiscale:
+            spec["shapes"]["middle_projection"] = ["B", head_channels, 8, 8]
+            spec["shapes"]["deep_upsampled"] = ["B", head_channels, 8, 8]
+            spec["shapes"]["concatenation"] = ["B", head_channels * 2, 8, 8]
+            spec["shapes"]["fusion"] = ["B", head_channels, 8, 8]
+        if attention:
+            spec["shapes"]["spatial_weights"] = ["B", 1, size, size]
+    return spec
 
 
 def memory_estimate(config, parameters):
@@ -170,6 +188,13 @@ def memory_estimate(config, parameters):
             elements += batch * channels * size * size
     elements += batch * config["model"]["head_channels"] * (size * size * 3 + 2)
     elements += batch * config["model"]["num_classes"]
+    if "ablation" in config:
+        multiscale, attention = EXPERIMENTS[config["ablation"]["experiment"]]
+        head_channels = config["model"]["head_channels"]
+        if multiscale:
+            elements += batch * head_channels * 8 * 8 * 10
+        if attention:
+            elements += batch * (head_channels + 4) * (8 if multiscale else 4) ** 2
     safety = config["safety"]
     values = {
         "precision": "float32", "batch_size": batch,
@@ -226,7 +251,7 @@ def gpu_preflight(config, directory):
         try:
             seed_everything(config["seed"])
             torch.cuda.reset_peak_memory_stats(0)
-            model = CifarCNN(**config["model"]).to("cuda:0").train()
+            model = build_model(config).to("cuda:0").train()
             optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["lr"],
                                          weight_decay=config["training"]["weight_decay"],
                                          foreach=False)
@@ -307,7 +332,7 @@ def save_checkpoint(path, model, epoch, val_accuracy, config):
 
 def load_best(directory):
     checkpoint = torch.load(directory / "best.pt", map_location="cpu", weights_only=True)
-    model = CifarCNN(**checkpoint["config"]["model"])
+    model = build_model(checkpoint["config"])
     model.load_state_dict(checkpoint["model_state_dict"], strict=True)
     return model.to("cuda:0").eval(), checkpoint
 
@@ -393,7 +418,8 @@ def collect_outputs(model, loader, with_cams):
     def keep_maps(_module, _inputs, output):
         activation["maps"] = output
 
-    handle = model.head[2].register_forward_hook(keep_maps) if with_cams else None
+    cam_layer = getattr(model, "cam_layer", model.head[2])
+    handle = cam_layer.register_forward_hook(keep_maps) if with_cams else None
     model.eval()
     try:
         for inputs, labels in loader:
@@ -538,7 +564,7 @@ def evaluate_split(model, loader, directory, split, checkpoint, checkpoint_hash,
             "frequent_confusions": "median-confidence error from each leading directed confusion pair",
             "high_confidence_errors": "highest-confidence errors remaining after other groups",
             "cam_pairs": "correct/error pair from each highest-error true class; median confidence within each group",
-            "cam_feature_shape": [config["model"]["head_channels"], 4, 4],
+            "cam_feature_shape": [config["model"]["head_channels"], *cams.shape[-2:]],
             "cam_values": "signed class-weighted activation sum before display ReLU and normalization",
         }
         metrics["artifact_sha256"] = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -595,6 +621,28 @@ def failure_status(directory, exc):
     print("Stopped ({}): {}".format(status, exc), file=sys.stderr, flush=True)
 
 
+def make_scheduler(optimizer, config):
+    options = config["training"].get("scheduler")
+    if options is None:
+        return None
+    expected = {"name": "cosine", "T_max": 99, "eta_min": 0.00001}
+    if options != expected or config["training"]["epochs"] != 100:
+        raise ValueError("Ablations require 100 epochs and cosine scheduling to 0.00001")
+    return torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=options["T_max"], eta_min=options["eta_min"])
+
+
+def verify_ablation_split(config, split_info):
+    if "ablation" not in config:
+        return
+    reference = Path(config["ablation"]["baseline_run"]) / "split_indices.npz"
+    with np.load(reference, allow_pickle=False) as baseline, np.load(
+            split_info["path"], allow_pickle=False) as current:
+        if set(baseline.files) != set(current.files) or any(
+                not np.array_equal(baseline[key], current[key]) for key in baseline.files):
+            raise ValueError("Ablation split differs from the existing baseline")
+
+
 def train(config, run_name):
     directory = new_directory(config["output"]["results_root"], run_name)
     write_json(directory / "config.json", config)
@@ -607,15 +655,17 @@ def train(config, run_name):
             return 2
         seed_everything(config["seed"])
         train_loader, val_loader, split_info = training_data(config)
+        verify_ablation_split(config, split_info)
         shutil.copyfile(split_info["path"], directory / "split_indices.npz")
         split_info["source_path"] = split_info["path"]
         split_info["path"] = "split_indices.npz"
         write_json(directory / "split.json", split_info)
-        model = CifarCNN(**config["model"]).to("cuda:0")
+        model = build_model(config).to("cuda:0")
         record_reproducibility(directory, config, model, split_info)
         optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["lr"],
                                      weight_decay=config["training"]["weight_decay"],
                                      foreach=False)
+        scheduler = make_scheduler(optimizer, config)
         criterion = nn.CrossEntropyLoss()
         best_accuracy = -1.0
         write_json(directory / "status.json", {"status": "training"})
@@ -637,6 +687,8 @@ def train(config, run_name):
                 print("Epoch {:3d}/{:3d}  train {:.4f}/{:.2%}  val {:.4f}/{:.2%}".format(
                     epoch, config["training"]["epochs"], train_loss, train_acc, val_loss, val_acc),
                     flush=True)
+                if scheduler is not None and epoch < config["training"]["epochs"]:
+                    scheduler.step()
         del model, optimizer, train_loader, val_loader
         gc.collect()
         torch.cuda.empty_cache()

@@ -1,0 +1,110 @@
+{
+  "seed": 42,
+  "physical_gpu": 0,
+  "accuracy_scale": "fraction in [0,1]",
+  "runs": [
+    {
+      "experiment": "basic",
+      "status": "reused",
+      "run_dir": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89",
+      "best_epoch": 94,
+      "val_accuracy": 0.9078,
+      "test_accuracy": 0.8937,
+      "test_macro_f1": 0.8936048042017793,
+      "cat_accuracy": 0.733,
+      "dog_accuracy": 0.885,
+      "cat_to_dog": 130,
+      "dog_to_cat": 42,
+      "source_sha256": {
+        "config.json": "5acc5a6c6dc0ed5c8e56c1757cf94330518311bbf9d87a78607e71a4f38c78ad",
+        "split_indices.npz": "595d8a14ead045d8368231026fb51e1608161e4f9d1ccd02d092321fbcbbf4dd",
+        "val_metrics.json": "418a0f662f9a3e53bb0f8d787c243fb08d086a1f571591552265199ffd10f1ad",
+        "test_metrics.json": "b660d91ca8af388394bca73c4193e4c08b70776b18c1b317b5e3018a594fba0a"
+      }
+    },
+    {
+      "experiment": "E1",
+      "multiscale_fusion": false,
+      "spatial_attention": false,
+      "status": "completed",
+      "returncode": 0,
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee",
+      "best_epoch": 99,
+      "val_accuracy": 0.9312,
+      "test_accuracy": 0.9164,
+      "test_macro_f1": 0.9163822925854188,
+      "cat_accuracy": 0.822,
+      "dog_accuracy": 0.871,
+      "cat_to_dog": 79,
+      "dog_to_cat": 79
+    },
+    {
+      "experiment": "E2",
+      "multiscale_fusion": true,
+      "spatial_attention": false,
+      "status": "completed",
+      "returncode": 0,
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0",
+      "best_epoch": 92,
+      "val_accuracy": 0.9256,
+      "test_accuracy": 0.9208,
+      "test_macro_f1": 0.9206688588084118,
+      "cat_accuracy": 0.837,
+      "dog_accuracy": 0.868,
+      "cat_to_dog": 61,
+      "dog_to_cat": 80
+    },
+    {
+      "experiment": "E3",
+      "multiscale_fusion": false,
+      "spatial_attention": true,
+      "status": "completed",
+      "returncode": 0,
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf",
+      "best_epoch": 99,
+      "val_accuracy": 0.9252,
+      "test_accuracy": 0.9211,
+      "test_macro_f1": 0.9208823501993928,
+      "cat_accuracy": 0.831,
+      "dog_accuracy": 0.865,
+      "cat_to_dog": 79,
+      "dog_to_cat": 74
+    },
+    {
+      "experiment": "E4",
+      "multiscale_fusion": true,
+      "spatial_attention": true,
+      "status": "completed",
+      "returncode": 0,
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc",
+      "best_epoch": 98,
+      "val_accuracy": 0.9266,
+      "test_accuracy": 0.922,
+      "test_macro_f1": 0.9218193936340207,
+      "cat_accuracy": 0.829,
+      "dog_accuracy": 0.871,
+      "cat_to_dog": 76,
+      "dog_to_cat": 67
+    }
+  ],
+  "effects": {
+    "val_accuracy_percentage_points": {
+      "cosine_vs_fixed_lr": 2.3399999999999976,
+      "fusion_vs_E1": -0.5600000000000049,
+      "attention_vs_E1": -0.6000000000000005,
+      "combined_vs_E1": -0.46000000000000485,
+      "fusion_with_attention": 0.13999999999999568,
+      "attention_with_fusion": 0.10000000000000009,
+      "interaction": 0.7000000000000006
+    },
+    "test_accuracy_percentage_points": {
+      "cosine_vs_fixed_lr": 2.2699999999999942,
+      "fusion_vs_E1": 0.43999999999999595,
+      "attention_vs_E1": 0.47000000000000375,
+      "combined_vs_E1": 0.5600000000000049,
+      "fusion_with_attention": 0.09000000000000119,
+      "attention_with_fusion": 0.12000000000000899,
+      "interaction": -0.34999999999999476
+    }
+  }
+}

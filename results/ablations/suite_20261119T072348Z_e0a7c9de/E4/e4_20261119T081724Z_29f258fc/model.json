@@ -1,0 +1,91 @@
+{
+  "name": "CifarCNN_E4",
+  "parameters": 5378268,
+  "trainable_parameters": 5378268,
+  "shapes": {
+    "input": [
+      "B",
+      3,
+      32,
+      32
+    ],
+    "stage1": [
+      "B",
+      64,
+      16,
+      16
+    ],
+    "stage2": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "stage3": [
+      "B",
+      256,
+      4,
+      4
+    ],
+    "stage4": [
+      "B",
+      384,
+      4,
+      4
+    ],
+    "channel_mapping": [
+      "B",
+      128,
+      4,
+      4
+    ],
+    "global_pool": [
+      "B",
+      128,
+      1,
+      1
+    ],
+    "logits": [
+      "B",
+      10
+    ],
+    "pre_pool": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "middle_projection": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "deep_upsampled": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "concatenation": [
+      "B",
+      256,
+      8,
+      8
+    ],
+    "fusion": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "spatial_weights": [
+      "B",
+      1,
+      8,
+      8
+    ]
+  },
+  "multiscale_fusion": true,
+  "spatial_attention": true
+}

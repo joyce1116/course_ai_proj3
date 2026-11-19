@@ -1,0 +1,6 @@
+experiment,status,returncode,multiscale_fusion,spatial_attention,best_epoch,val_accuracy,test_accuracy,test_macro_f1,cat_accuracy,dog_accuracy,cat_to_dog,dog_to_cat,run_dir
+basic,reused,,,,94,0.9078,0.8937,0.8936048042017793,0.733,0.885,130,42,/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89
+E1,completed,0,False,False,99,0.9312,0.9164,0.9163822925854188,0.822,0.871,79,79,/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee
+E2,completed,0,True,False,92,0.9256,0.9208,0.9206688588084118,0.837,0.868,61,80,/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0
+E3,completed,0,False,True,99,0.9252,0.9211,0.9208823501993928,0.831,0.865,79,74,/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf
+E4,completed,0,True,True,98,0.9266,0.922,0.9218193936340207,0.829,0.871,76,67,/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc
