@@ -1,5 +1,5 @@
 {
-  "requested_physical_gpu": 2,
+  "requested_physical_gpu": 0,
   "estimate": {
     "precision": "float32",
     "batch_size": 128,
@@ -15,11 +15,11 @@
   "blockers": [],
   "preflight_executed": true,
   "torchvision_import": "0.25.0+cu128",
-  "reserve_bytes": 5087625216,
-  "free_bytes_before_preflight": 16944136192,
+  "reserve_bytes": 5086157209,
+  "free_bytes_before_preflight": 23190175744,
   "measured_peak_allocated_bytes": 519354368,
   "measured_peak_reserved_bytes": 538968064,
-  "free_bytes_after_step": 15526461440,
+  "free_bytes_after_step": 22531670016,
   "measured_live_allocated_bytes": 158173184,
   "budget_after_probe_bytes": 4247872672
 }

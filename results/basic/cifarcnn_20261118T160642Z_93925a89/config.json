@@ -1,6 +1,6 @@
 {
   "seed": 42,
-  "gpu": 2,
+  "gpu": 0,
   "model": {
     "channels": [
       64,
@@ -19,7 +19,7 @@
     "num_classes": 10
   },
   "data": {
-    "root": "/home/test_cxy/dataset",
+    "root": "/home/homework_cxy/dataset",
     "split_seed": 42,
     "val_size": 5000,
     "mean": [
@@ -34,7 +34,7 @@
     ],
     "crop_padding": 4,
     "horizontal_flip_probability": 0.5,
-    "download": false,
+    "download": true,
     "download_urls": [
       "https://cave.cs.toronto.edu/kriz/cifar-10-python.tar.gz",
       "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
@@ -56,9 +56,12 @@
     "min_reserve_gib": 1.0
   },
   "output": {
-    "results_root": "/home/test_cxy/results/basic",
-    "figures_root": "/home/test_cxy/figures/basic",
-    "misclassified_count": 16,
+    "results_root": "/home/homework_cxy/results/basic",
+    "figures_root": "figures/basic",
+    "error_examples_per_group": 4,
+    "cam_classes": 2,
+    "calibration_bins": 10,
+    "top_confusions": 5,
     "figure_dpi": 180
   }
 }

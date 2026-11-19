@@ -1,0 +1,26 @@
+{
+  "seed": 42,
+  "split_seed": 42,
+  "loader_generator_seed": 42,
+  "worker_seed": "torch.initial_seed() modulo 2**32 for NumPy and Python random",
+  "deterministic_algorithms": true,
+  "cudnn_deterministic": true,
+  "cudnn_benchmark": false,
+  "cuda_matmul_allow_tf32": false,
+  "cudnn_allow_tf32": false,
+  "pythonhashseed": "42",
+  "cublas_workspace_config": ":4096:8",
+  "initial_state_sha256": "85098e4b68baba3fa92e9445c3036730de4cb2b2fe03c9decc78a24d4982ce9e",
+  "split_file": "split_indices.npz",
+  "split_sha256": "595d8a14ead045d8368231026fb51e1608161e4f9d1ccd02d092321fbcbbf4dd",
+  "source_sha256": {
+    "run.py": "c77ce046bd7904090e5b3553ea918f6408956d9f09aa19d2d451d5b3d61f811b",
+    "data.py": "8f73f9ac855db6e5e7745a4cb23514069fb49732321a35f3d7daa4dd496836af",
+    "experiment.py": "bde109c29c46a15da77415b7ba665acc30c26a690543731e30ae17010d7c7f7f",
+    "visualization.py": "52745afaa6fbd17ad26f27f2d7caba09258141645c50c429c995f5fd4470c48c",
+    "models/cnn.py": "53456d3a337a721096a8ab64f0e35a249ffae9bcb18f5ca8bde378913a73b660",
+    "config/basic.json": "9ed9cd94cda5bba88ad7048fe89b8f6976fb2231897869d1606eb0b9bf74686c",
+    "scripts/run_basic.sh": "04a6ca5d16b116de6aaabe1e51856420e34344d1f5cb73ecd7a73f589bc2fc27",
+    "requirements.txt": "33d98ba365c12f991e610643a7a33658a2fa2b8b41440e367f5947cb39cd614c"
+  }
+}
