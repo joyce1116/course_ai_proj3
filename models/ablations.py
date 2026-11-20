@@ -10,6 +10,9 @@ EXPERIMENTS = {
     "E2": (True, False),
     "E3": (False, True),
     "E4": (True, True),
+    "N1": (False, False),
+    "N2": (False, False),
+    "N3": (False, False),
 }
 
 
@@ -51,6 +54,23 @@ class SpatialAttention(nn.Module):
         return features * weights
 
 
+class SqueezeExcitation(nn.Module):
+    def __init__(self, channels=128, hidden_channels=8):
+        super().__init__()
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.mapping = nn.Sequential(
+            nn.Linear(channels, hidden_channels),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_channels, channels),
+            nn.Sigmoid(),
+        )
+        self.apply(CifarCNN._initialize)
+
+    def forward(self, features):
+        weights = self.mapping(self.pool(features).flatten(1))
+        return features * weights[:, :, None, None]
+
+
 class AblationCNN(CifarCNN):
     def __init__(self, experiment, **options):
         super().__init__(**options)
@@ -62,7 +82,10 @@ class AblationCNN(CifarCNN):
                        if multiscale else None)
         if not multiscale:
             self.channel_mapping = mapping
-        self.pre_pool = SpatialAttention() if attention else nn.Identity()
+        if experiment == "N3":
+            self.pre_pool = SqueezeExcitation(original_head[0].out_channels, 8)
+        else:
+            self.pre_pool = SpatialAttention() if attention else nn.Identity()
         self.head = nn.Sequential(*original_head[3:])
 
     @property
@@ -82,7 +105,7 @@ class AblationCNN(CifarCNN):
 
 def build_model(config):
     experiment = config.get("ablation", {}).get("experiment")
-    if experiment is None or experiment == "E1":
+    if experiment is None or experiment in ("E1", "N1", "N2"):
         return CifarCNN(**config["model"])
     if experiment not in EXPERIMENTS:
         raise ValueError("Unknown ablation: " + str(experiment))

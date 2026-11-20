@@ -54,6 +54,8 @@ def record_reproducibility(directory, config, model, split_info):
              "config/basic.json", "scripts/run_basic.sh", "requirements.txt")
     if "ablation" in config:
         files += ("models/ablations.py", "scripts/run_ablations.py")
+    if config.get("ablation", {}).get("experiment") in ("N1", "N2", "N3"):
+        files += ("scripts/run_n_experiments.py",)
     initial_state = hashlib.sha256()
     for name, value in model.state_dict().items():
         initial_state.update(name.encode("utf-8"))
@@ -173,6 +175,11 @@ def model_info(config):
             spec["shapes"]["fusion"] = ["B", head_channels, 8, 8]
         if attention:
             spec["shapes"]["spatial_weights"] = ["B", 1, size, size]
+        if experiment == "N3":
+            spec["se_channel_attention"] = True
+            spec["shapes"]["se_descriptor"] = ["B", head_channels]
+            spec["shapes"]["se_hidden"] = ["B", 8]
+            spec["shapes"]["se_weights"] = ["B", head_channels, 1, 1]
     return spec
 
 
@@ -195,6 +202,8 @@ def memory_estimate(config, parameters):
             elements += batch * head_channels * 8 * 8 * 10
         if attention:
             elements += batch * (head_channels + 4) * (8 if multiscale else 4) ** 2
+        if config["ablation"]["experiment"] == "N3":
+            elements += batch * (head_channels * (size * size + 3) + 8)
     safety = config["safety"]
     values = {
         "precision": "float32", "batch_size": batch,
@@ -261,7 +270,8 @@ def gpu_preflight(config, directory):
             report["preflight_executed"] = True
             optimizer.zero_grad(set_to_none=True)
             logits = model(inputs)
-            loss = nn.functional.cross_entropy(logits, labels)
+            loss = nn.functional.cross_entropy(
+                logits, labels, label_smoothing=config["training"].get("label_smoothing", 0.0))
             if not torch.isfinite(loss):
                 raise RuntimeError("Non-finite preflight loss")
             loss.backward()
@@ -667,6 +677,8 @@ def train(config, run_name):
                                      foreach=False)
         scheduler = make_scheduler(optimizer, config)
         criterion = nn.CrossEntropyLoss()
+        train_criterion = nn.CrossEntropyLoss(
+            label_smoothing=config["training"].get("label_smoothing", 0.0))
         best_accuracy = -1.0
         write_json(directory / "status.json", {"status": "training"})
         with (directory / "history.csv").open("x", newline="", encoding="utf-8") as stream:
@@ -675,7 +687,7 @@ def train(config, run_name):
             stream.flush()
             for epoch in range(1, config["training"]["epochs"] + 1):
                 started = time.perf_counter()
-                train_loss, train_acc, train_count = run_epoch(model, train_loader, criterion, optimizer)
+                train_loss, train_acc, train_count = run_epoch(model, train_loader, train_criterion, optimizer)
                 val_loss, val_acc, val_count = run_epoch(model, val_loader, criterion)
                 writer.writerow(dict(zip(HISTORY_FIELDS, (
                     epoch, train_loss, train_acc, val_loss, val_acc, train_count, val_count,
@@ -702,6 +714,9 @@ def train(config, run_name):
             print("Training is complete. Resume evaluation with run.py test --run-dir "
                   + str(directory) + "; no retraining is needed.", file=sys.stderr, flush=True)
         return 1
+    if not config["output"].get("plot", True):
+        write_json(directory / "status.json", {"status": "completed", "plotting_skipped": True})
+        return 0
     try:
         write_json(directory / "status.json", {"status": "plotting"})
         plot_results(directory)
@@ -729,6 +744,7 @@ def test_only(directory, config):
     except Exception as exc:
         failure_status(check_directory, exc)
         return 1
-    plot_results(directory)
+    if config["output"].get("plot", True):
+        plot_results(directory)
     write_json(directory / "status.json", {"status": "completed"})
     return 0

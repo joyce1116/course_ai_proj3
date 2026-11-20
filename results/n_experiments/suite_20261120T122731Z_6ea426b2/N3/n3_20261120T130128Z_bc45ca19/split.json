@@ -1,0 +1,33 @@
+{
+  "path": "split_indices.npz",
+  "file_sha256": "595d8a14ead045d8368231026fb51e1608161e4f9d1ccd02d092321fbcbbf4dd",
+  "seed": 42,
+  "train_samples": 45000,
+  "validation_samples": 5000,
+  "train_per_class": [
+    4500,
+    4500,
+    4500,
+    4500,
+    4500,
+    4500,
+    4500,
+    4500,
+    4500,
+    4500
+  ],
+  "validation_per_class": [
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500,
+    500
+  ],
+  "sample_index_definition": "zero-based index in the official training set",
+  "source_path": "/home/homework_cxy/dataset/split_seed42.npz"
+}

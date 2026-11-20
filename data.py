@@ -149,11 +149,14 @@ def training_data(config):
     options = config["data"]
     prepare_data(options)
     normal = transforms.Normalize(options["mean"], options["std"])
-    train_transform = transforms.Compose([
+    train_transforms = [
         transforms.RandomCrop(32, padding=options["crop_padding"]),
         transforms.RandomHorizontalFlip(options["horizontal_flip_probability"]),
         transforms.ToTensor(), normal,
-    ])
+    ]
+    if "random_erasing" in options:
+        train_transforms.append(transforms.RandomErasing(**options["random_erasing"]))
+    train_transform = transforms.Compose(train_transforms)
     eval_transform = transforms.Compose([transforms.ToTensor(), normal])
     train_data = datasets.CIFAR10(options["root"], train=True,
                                  download=False, transform=train_transform)
