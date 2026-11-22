@@ -1,0 +1,856 @@
+{
+  "status": "inputs_only",
+  "analyses_performed": false,
+  "retrain_missing_checkpoints": false,
+  "shared_assets_sha256": {
+    "shared/occlusion_positions.npz": "415e25ab1898feabe04f0d0778d3efefd48bfade6a76c7ccd535ac0b48c63ba9",
+    "shared/representative_samples.json": "6782988a318398d47114857f9d7bb67d239da4001f914a50b532a39b73a371e8"
+  },
+  "runs": [
+    {
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee",
+      "analysis_performed": false,
+      "experiment": "E1",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/best.pt",
+        "config.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/config.json",
+        "history.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0",
+      "analysis_performed": false,
+      "experiment": "E2",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/best.pt",
+        "config.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/config.json",
+        "history.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E2/e2_20261119T074024Z_826b67d0/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf",
+      "analysis_performed": false,
+      "experiment": "E3",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/best.pt",
+        "config.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/config.json",
+        "history.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E3/e3_20261119T075938Z_662a2bcf/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc",
+      "analysis_performed": false,
+      "experiment": "E4",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/best.pt",
+        "config.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/config.json",
+        "history.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E4/e4_20261119T081724Z_29f258fc/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89",
+      "analysis_performed": false,
+      "experiment": "basic",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/best.pt",
+        "config.json": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/config.json",
+        "history.csv": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10",
+      "analysis_performed": false,
+      "experiment": "N10",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11",
+      "analysis_performed": false,
+      "experiment": "N11",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N11/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12",
+      "analysis_performed": false,
+      "experiment": "N12",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N12/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13",
+      "analysis_performed": false,
+      "experiment": "N13",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N13/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14",
+      "analysis_performed": false,
+      "experiment": "N14",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N14/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15",
+      "analysis_performed": false,
+      "experiment": "N15",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16",
+      "analysis_performed": false,
+      "experiment": "N16",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N16/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17",
+      "analysis_performed": false,
+      "experiment": "N17",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N17/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18",
+      "analysis_performed": false,
+      "experiment": "N18",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N18/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19",
+      "analysis_performed": false,
+      "experiment": "N19",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N19/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20",
+      "analysis_performed": false,
+      "experiment": "N20",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N20/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21",
+      "analysis_performed": false,
+      "experiment": "N21",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N21/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22",
+      "analysis_performed": false,
+      "experiment": "N22",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23",
+      "analysis_performed": false,
+      "experiment": "N23",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N23/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24",
+      "analysis_performed": false,
+      "experiment": "N24",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N24/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25",
+      "analysis_performed": false,
+      "experiment": "N25",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N25/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26",
+      "analysis_performed": false,
+      "experiment": "N26",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N26/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27",
+      "analysis_performed": false,
+      "experiment": "N27",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N27/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28",
+      "analysis_performed": false,
+      "experiment": "N28",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N28/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4",
+      "analysis_performed": false,
+      "experiment": "N4",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N4/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5",
+      "analysis_performed": false,
+      "experiment": "N5",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N5/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6",
+      "analysis_performed": false,
+      "experiment": "N6",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N6/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7",
+      "analysis_performed": false,
+      "experiment": "N7",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N7/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8",
+      "analysis_performed": false,
+      "experiment": "N8",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N8/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9",
+      "analysis_performed": false,
+      "experiment": "N9",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/best.pt",
+        "config.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/config.json",
+        "history.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/val_predictions.csv",
+        "resources.json": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N9/resources.json"
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a",
+      "analysis_performed": false,
+      "experiment": "N1",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/best.pt",
+        "config.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/config.json",
+        "history.csv": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N1/n1_20261120T122734Z_bc571e3a/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be",
+      "analysis_performed": false,
+      "experiment": "N2",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/best.pt",
+        "config.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/config.json",
+        "history.csv": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N2/n2_20261120T124424Z_9f87e9be/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    },
+    {
+      "run_dir": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19",
+      "analysis_performed": false,
+      "experiment": "N3",
+      "checkpoint_status": "available",
+      "weight_dependent_analysis_status": "pending",
+      "reason": null,
+      "inputs": {
+        "best.pt": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/best.pt",
+        "config.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/config.json",
+        "history.csv": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/history.csv",
+        "split_indices.npz": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/split_indices.npz",
+        "train_eval_metrics.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/train_eval_metrics.json",
+        "val_metrics.json": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/val_metrics.json",
+        "val_outputs.npz": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/val_outputs.npz",
+        "val_predictions.csv": "/home/homework_cxy/results/n_experiments/suite_20261120T122731Z_6ea426b2/N3/n3_20261120T130128Z_bc45ca19/val_predictions.csv",
+        "resources.json": null
+      },
+      "history_schema_valid": true,
+      "validation_output_schema_valid": true,
+      "early_stop_input_status": "ready",
+      "sample_comparison_input_status": "ready"
+    }
+  ],
+  "early_stopping": {
+    "patience": [
+      10,
+      15,
+      20
+    ],
+    "improvement": "strictly greater than historical best",
+    "input": "history.csv",
+    "restore": "best logged validation metrics before stop"
+  },
+  "robustness": {
+    "split": "val",
+    "independent_perturbations": true,
+    "translations_x": [
+      -2,
+      2
+    ],
+    "translation_fill_normalized": 0,
+    "circular_translation": false,
+    "brightness_factors_before_normalization": [
+      0.7,
+      1.3
+    ],
+    "clip_pixels": [
+      0,
+      255
+    ],
+    "occlusion_sizes": [
+      4,
+      8
+    ],
+    "occlusion_fill_normalized": 0,
+    "positions": "shared/occlusion_positions.npz",
+    "position_order": "row, column"
+  },
+  "tta": {
+    "split": "val",
+    "views": [
+      "original",
+      "horizontal_flip"
+    ],
+    "forward_passes": 2,
+    "aggregation": "mean class probabilities; never average logits",
+    "timing": "separate single-view and two-view timings; synchronize CUDA around timing"
+  },
+  "sample_comparison": {
+    "default_reference": "E1",
+    "component_references": {
+      "N4": [
+        "E1",
+        "N1",
+        "N3"
+      ],
+      "N6": [
+        "E1",
+        "N1",
+        "N5"
+      ],
+      "N7": [
+        "E1",
+        "N3",
+        "N5"
+      ],
+      "N8": [
+        "E1",
+        "N1",
+        "N3",
+        "N5",
+        "N4",
+        "N6",
+        "N7"
+      ],
+      "N17": [
+        "E1",
+        "N3",
+        "E3"
+      ]
+    },
+    "join": "official training sample_index; verify identical labels and splits",
+    "future_counts": [
+      "corrected_errors",
+      "new_errors",
+      "common_errors"
+    ],
+    "representatives": "shared/representative_samples.json"
+  }
+}

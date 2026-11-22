@@ -1,0 +1,67 @@
+{
+  "name": "CifarCNN_N25",
+  "parameters": 5328586,
+  "trainable_parameters": 5328586,
+  "shapes": {
+    "input": [
+      "B",
+      3,
+      32,
+      32
+    ],
+    "stage1": [
+      "B",
+      64,
+      16,
+      16
+    ],
+    "stage2": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "stage3": [
+      "B",
+      256,
+      4,
+      4
+    ],
+    "stage4": [
+      "B",
+      384,
+      4,
+      4
+    ],
+    "channel_mapping": [
+      "B",
+      128,
+      4,
+      4
+    ],
+    "global_pool": [
+      "B",
+      128,
+      1,
+      1
+    ],
+    "logits": [
+      "B",
+      10
+    ],
+    "pre_pool": [
+      "B",
+      128,
+      4,
+      4
+    ]
+  },
+  "multiscale_fusion": false,
+  "spatial_attention": false,
+  "structure": {},
+  "compute": {
+    "macs_per_image": 247923968,
+    "multiply_add_flops_per_image": 495847936,
+    "scope": "Conv2d and Linear only; excludes BN, activations, pooling and elementwise operations"
+  }
+}

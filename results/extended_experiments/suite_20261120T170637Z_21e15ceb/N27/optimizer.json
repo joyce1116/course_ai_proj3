@@ -1,0 +1,14 @@
+{
+  "name": "SGD",
+  "defaults": {
+    "lr": 0.05,
+    "momentum": 0.9,
+    "dampening": 0,
+    "weight_decay": 0.0001,
+    "nesterov": false,
+    "maximize": false,
+    "foreach": false,
+    "differentiable": false,
+    "fused": null
+  }
+}

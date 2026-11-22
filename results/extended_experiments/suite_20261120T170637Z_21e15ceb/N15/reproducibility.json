@@ -1,0 +1,35 @@
+{
+  "seed": 42,
+  "split_seed": 42,
+  "loader_generator_seed": 42,
+  "worker_seed": "torch.initial_seed() modulo 2**32 for NumPy and Python random",
+  "deterministic_algorithms": true,
+  "cudnn_deterministic": true,
+  "cudnn_benchmark": false,
+  "cuda_matmul_allow_tf32": false,
+  "cudnn_allow_tf32": false,
+  "pythonhashseed": "42",
+  "cublas_workspace_config": ":4096:8",
+  "initial_state_sha256": "85098e4b68baba3fa92e9445c3036730de4cb2b2fe03c9decc78a24d4982ce9e",
+  "code_version": {
+    "commit": "Command '['git', 'rev-parse', 'HEAD']' returned non-zero exit status 128.",
+    "working_tree": "Command '['git', 'status', '--porcelain']' returned non-zero exit status 128."
+  },
+  "config_sha256": "c6ed22f2b151577f25f3e365d9d3a5e2e896855feddd2b38506e9a3ebb711399",
+  "split_file": "split_indices.npz",
+  "split_sha256": "595d8a14ead045d8368231026fb51e1608161e4f9d1ccd02d092321fbcbbf4dd",
+  "source_sha256": {
+    "run.py": "08c7fa55a1ec4ee1e9651c1d15f77d8d659b0cc418713085a1f70ae5e77dbda2",
+    "data.py": "bda0996264f9138ae73f78986eda58e99e347c982b8995b3e8d9af75b7cd3c0a",
+    "experiment.py": "eec52c237449e4fdf48e7112c50648c3eadaee0fabd5e45ef4157242092ad40d",
+    "visualization.py": "52745afaa6fbd17ad26f27f2d7caba09258141645c50c429c995f5fd4470c48c",
+    "models/cnn.py": "53456d3a337a721096a8ab64f0e35a249ffae9bcb18f5ca8bde378913a73b660",
+    "config/basic.json": "9ed9cd94cda5bba88ad7048fe89b8f6976fb2231897869d1606eb0b9bf74686c",
+    "scripts/run_basic.sh": "04a6ca5d16b116de6aaabe1e51856420e34344d1f5cb73ecd7a73f589bc2fc27",
+    "requirements.txt": "33d98ba365c12f991e610643a7a33658a2fa2b8b41440e367f5947cb39cd614c",
+    "models/ablations.py": "a86721a5f700f207ab2dd28d30e36a1d12050a26fe554b82149c8c9fe3f52103",
+    "scripts/run_ablations.py": "ca2ac392e44c6ef21075e3d6fff0bddf9918696300584c7f248b59a51f6eae0d",
+    "recipes.py": "edd74acc3f7646faea818bbdec97b56115fd590a66c5167f4c0e99d54a40f246",
+    "scripts/run_extended_experiments.py": "bcef74c9ba6b3350a37417b2029c32d64a278cba3205d05f74a0d8a8416fce77"
+  }
+}

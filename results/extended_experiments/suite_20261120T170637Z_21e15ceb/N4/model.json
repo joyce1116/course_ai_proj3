@@ -1,0 +1,85 @@
+{
+  "name": "CifarCNN_N4",
+  "parameters": 5330770,
+  "trainable_parameters": 5330770,
+  "shapes": {
+    "input": [
+      "B",
+      3,
+      32,
+      32
+    ],
+    "stage1": [
+      "B",
+      64,
+      16,
+      16
+    ],
+    "stage2": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "stage3": [
+      "B",
+      256,
+      4,
+      4
+    ],
+    "stage4": [
+      "B",
+      384,
+      4,
+      4
+    ],
+    "channel_mapping": [
+      "B",
+      128,
+      4,
+      4
+    ],
+    "global_pool": [
+      "B",
+      128,
+      1,
+      1
+    ],
+    "logits": [
+      "B",
+      10
+    ],
+    "pre_pool": [
+      "B",
+      128,
+      4,
+      4
+    ],
+    "se_input": [
+      "B",
+      128,
+      4,
+      4
+    ],
+    "se_hidden": [
+      "B",
+      8
+    ],
+    "se_weights": [
+      "B",
+      128,
+      1,
+      1
+    ]
+  },
+  "multiscale_fusion": false,
+  "spatial_attention": false,
+  "structure": {
+    "se": "head"
+  },
+  "compute": {
+    "macs_per_image": 247926016,
+    "multiply_add_flops_per_image": 495852032,
+    "scope": "Conv2d and Linear only; excludes BN, activations, pooling and elementwise operations"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "total_training_wall_seconds": 1307.6277704220265,
+  "training_wall_time_definition": "training and validation plus checkpoint/log I/O; excludes preflight, setup and final evaluation",
+  "completed_epochs": 100,
+  "training_completed": true,
+  "total_training_seconds": 1296.4617729522288,
+  "total_training_time_definition": "sum of completed training+validation epoch wall times",
+  "peak_allocated_bytes": 631002624,
+  "peak_reserved_bytes": 828375040
+}

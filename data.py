@@ -143,27 +143,67 @@ def make_loader(dataset, config, training=False):
                       generator=generator)
 
 
+def training_transform(options):
+    from torchvision import transforms
+    normal = transforms.Normalize(options["mean"], options["std"])
+    train_transforms = [
+        transforms.RandomCrop(32, padding=options["crop_padding"]),
+        transforms.RandomHorizontalFlip(options["horizontal_flip_probability"]),
+    ]
+    if "randaugment" in options:
+        augment = dict(options["randaugment"])
+        if augment.pop("interpolation") != "bilinear":
+            raise ValueError("RandAugment requires bilinear interpolation")
+        train_transforms.append(transforms.RandAugment(
+            **augment, interpolation=transforms.InterpolationMode.BILINEAR))
+    if "color_jitter" in options:
+        train_transforms.append(transforms.ColorJitter(**options["color_jitter"]))
+    train_transforms.extend([transforms.ToTensor(), normal])
+    if "random_erasing" in options:
+        train_transforms.append(transforms.RandomErasing(**options["random_erasing"]))
+    return transforms.Compose(train_transforms)
+
+
+def mix_batch(inputs, labels, options, force=False):
+    if options is None or (not force and options["probability"] < 1
+                           and np.random.random() >= options["probability"]):
+        return inputs, labels, None, 1.0
+    alpha = options["alpha"]
+    weight = float(np.random.beta(alpha, alpha))
+    paired = torch.randperm(inputs.size(0), device=inputs.device)
+    if options["name"] == "mixup":
+        inputs = inputs * weight + inputs[paired] * (1 - weight)
+    elif options["name"] == "cutmix":
+        height, width = inputs.shape[-2:]
+        cut_h, cut_w = int(height * np.sqrt(1 - weight)), int(width * np.sqrt(1 - weight))
+        cy, cx = int(np.random.randint(height)), int(np.random.randint(width))
+        y1, y2 = max(cy - cut_h // 2, 0), min(cy + cut_h - cut_h // 2, height)
+        x1, x2 = max(cx - cut_w // 2, 0), min(cx + cut_w - cut_w // 2, width)
+        mixed = inputs.clone()
+        mixed[:, :, y1:y2, x1:x2] = inputs[paired, :, y1:y2, x1:x2]
+        inputs = mixed
+        weight = 1.0 - ((y2 - y1) * (x2 - x1)) / (height * width)
+    else:
+        raise ValueError("Unknown batch mixing method")
+    return inputs, labels, labels[paired], weight
+
+
 def training_data(config):
     from torchvision import datasets, transforms
 
     options = config["data"]
     prepare_data(options)
     normal = transforms.Normalize(options["mean"], options["std"])
-    train_transforms = [
-        transforms.RandomCrop(32, padding=options["crop_padding"]),
-        transforms.RandomHorizontalFlip(options["horizontal_flip_probability"]),
-        transforms.ToTensor(), normal,
-    ]
-    if "random_erasing" in options:
-        train_transforms.append(transforms.RandomErasing(**options["random_erasing"]))
-    train_transform = transforms.Compose(train_transforms)
+    train_transform = training_transform(options)
     eval_transform = transforms.Compose([transforms.ToTensor(), normal])
     train_data = datasets.CIFAR10(options["root"], train=True,
                                  download=False, transform=train_transform)
     val_data = datasets.CIFAR10(options["root"], train=True,
                                download=False, transform=eval_transform)
     train, val, split_info = stratified_split(
-        train_data.targets, options["root"], options["split_seed"], options["val_size"])
+        train_data.targets, options["root"], options["split_seed"], options["val_size"],
+        index_path=(Path(config["ablation"]["baseline_run"]) / "split_indices.npz"
+                    if config.get("protocol") == "n4-n28-v1" else None))
     return (make_loader(Subset(train_data, train.tolist()), config, training=True),
             make_loader(Subset(val_data, val.tolist()), config), split_info)
 

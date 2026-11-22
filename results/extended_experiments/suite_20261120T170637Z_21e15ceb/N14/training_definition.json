@@ -1,0 +1,15 @@
+{
+  "training_loss": "lambda * CE(logits, y_a) + (1-lambda) * CE(logits, y_b)",
+  "label_smoothing": 0.0,
+  "batch_mixing": {
+    "name": "cutmix",
+    "alpha": 1.0,
+    "probability": 0.5
+  },
+  "training_accuracy": "mean(lambda * 1[pred=y_a] + (1-lambda) * 1[pred=y_b]); lambda is corrected for actual clipped CutMix area",
+  "evaluation_loss": "ordinary cross entropy with true hard labels; no smoothing or mixing",
+  "evaluation_accuracy": "mean(1[pred=true hard label])",
+  "early_stopping": false,
+  "training_budget_epochs": 100,
+  "selection": "strictly highest validation accuracy; first epoch wins ties"
+}

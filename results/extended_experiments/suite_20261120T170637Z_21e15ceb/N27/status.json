@@ -1,0 +1,10 @@
+{
+  "status": "completed",
+  "config_sha256": "bbe9704966b70c00e0534917eb926cdb7c71c719bb46fc7fa464abd407670d86",
+  "epochs_completed": 100,
+  "best_epoch": 98,
+  "best_val_accuracy": 0.9326,
+  "test_evaluation": "disabled",
+  "cam": "disabled",
+  "plotting": "disabled"
+}

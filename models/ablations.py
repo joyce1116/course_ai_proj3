@@ -3,6 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from models.cnn import CifarCNN
+from recipes import RECIPES
 
 
 EXPERIMENTS = {
@@ -14,6 +15,7 @@ EXPERIMENTS = {
     "N2": (False, False),
     "N3": (False, False),
 }
+EXPERIMENTS.update({name: (False, False) for name in RECIPES})
 
 
 def projection(in_channels, out_channels):
@@ -103,8 +105,65 @@ class AblationCNN(CifarCNN):
         return self.head(self.pre_pool(features))
 
 
+class GlobalMaximum(nn.Module):
+    def forward(self, features):
+        return features.amax(dim=(-2, -1), keepdim=True)
+
+
+class AverageMaximum(nn.Module):
+    def forward(self, features):
+        return (F.adaptive_avg_pool2d(features, 1)
+                + features.amax(dim=(-2, -1), keepdim=True)) * 0.5
+
+
+class ResidualStage(nn.Module):
+    def __init__(self, stage, in_channels, out_channels, pooled):
+        super().__init__()
+        layers = list(stage.children())
+        self.pool = layers.pop() if pooled else nn.Identity()
+        self.branch = nn.Sequential(*layers[:-1])
+        self.shortcut = (nn.Sequential(nn.Conv2d(in_channels, out_channels, 1, bias=False),
+                                       nn.BatchNorm2d(out_channels))
+                         if in_channels != out_channels else nn.Identity())
+        self.shortcut.apply(CifarCNN._initialize)
+        self.activation = nn.ReLU(inplace=True)
+
+    def forward(self, features):
+        return self.pool(self.activation(self.branch(features) + self.shortcut(features)))
+
+
+class RecipeCNN(CifarCNN):
+    def __init__(self, structure, **options):
+        super().__init__(**options)
+        channels = options.get("channels", (64, 128, 256, 384))
+        if structure.get("residual"):
+            in_channels = 3
+            for index, out_channels in enumerate(channels):
+                self.stages[index] = ResidualStage(self.stages[index], in_channels,
+                                                    out_channels, index < 3)
+                in_channels = out_channels
+        if structure.get("downsampling") == "avg":
+            for stage in self.stages[:3]:
+                stage[-1] = nn.AvgPool2d(2, stride=2)
+        if structure.get("se") == "stage2":
+            self.stages[1].add_module("se", SqueezeExcitation(channels[1], 8))
+        head = list(self.head.children())
+        if structure.get("global_pool") == "max":
+            head[3] = GlobalMaximum()
+        elif structure.get("global_pool") == "avgmax":
+            head[3] = AverageMaximum()
+        attention = []
+        if structure.get("se") == "head":
+            attention.append(SqueezeExcitation(head[0].out_channels, 8))
+        if structure.get("spatial_attention"):
+            attention.append(SpatialAttention())
+        self.head = nn.Sequential(*head[:3], *attention, *head[3:])
+
+
 def build_model(config):
     experiment = config.get("ablation", {}).get("experiment")
+    if experiment in RECIPES:
+        return RecipeCNN(config["structure"], **config["model"])
     if experiment is None or experiment in ("E1", "N1", "N2"):
         return CifarCNN(**config["model"])
     if experiment not in EXPERIMENTS:

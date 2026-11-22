@@ -19,8 +19,9 @@ import numpy as np
 import torch
 from torch import nn
 
-from data import CLASSES, evaluation_data, test_data, training_data
+from data import CLASSES, evaluation_data, mix_batch, test_data, training_data, training_transform
 from models.ablations import EXPERIMENTS, build_model
+from recipes import BASE_MODEL, PROTOCOL, RECIPES, fingerprint, training_definition
 from visualization import plot_results
 
 
@@ -56,6 +57,16 @@ def record_reproducibility(directory, config, model, split_info):
         files += ("models/ablations.py", "scripts/run_ablations.py")
     if config.get("ablation", {}).get("experiment") in ("N1", "N2", "N3"):
         files += ("scripts/run_n_experiments.py",)
+    if config.get("protocol") == PROTOCOL:
+        files += ("recipes.py", "scripts/run_extended_experiments.py")
+    version = {}
+    for key, command in (("commit", ["git", "rev-parse", "HEAD"]),
+                         ("working_tree", ["git", "status", "--porcelain"])):
+        try:
+            version[key] = subprocess.run(command, cwd=source_root, check=True, timeout=10,
+                                          capture_output=True, text=True).stdout.strip()
+        except (OSError, subprocess.SubprocessError) as exc:
+            version[key] = str(exc)
     initial_state = hashlib.sha256()
     for name, value in model.state_dict().items():
         initial_state.update(name.encode("utf-8"))
@@ -72,6 +83,7 @@ def record_reproducibility(directory, config, model, split_info):
         "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
         "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
         "initial_state_sha256": initial_state.hexdigest(),
+        "code_version": version, "config_sha256": fingerprint(config),
         "split_file": "split_indices.npz", "split_sha256": split_info["file_sha256"],
         "source_sha256": {name: hashlib.sha256((source_root / name).read_bytes()).hexdigest()
                           for name in files},
@@ -180,7 +192,53 @@ def model_info(config):
             spec["shapes"]["se_descriptor"] = ["B", head_channels]
             spec["shapes"]["se_hidden"] = ["B", 8]
             spec["shapes"]["se_weights"] = ["B", head_channels, 1, 1]
+    if config.get("protocol") == PROTOCOL:
+        spec["structure"] = config["structure"]
+        spec["spatial_attention"] = config["structure"].get("spatial_attention", False)
+        if config["structure"].get("se"):
+            size = 8 if config["structure"]["se"] == "stage2" else 4
+            spec["shapes"]["se_input"] = ["B", head_channels, size, size]
+            spec["shapes"]["se_hidden"] = ["B", 8]
+            spec["shapes"]["se_weights"] = ["B", head_channels, 1, 1]
+        if spec["spatial_attention"]:
+            spec["shapes"]["spatial_weights"] = ["B", 1, 4, 4]
+        spec["compute"] = compute_cost(model)
+        if config["structure"].get("residual"):
+            from models.cnn import CifarCNN
+            baseline = CifarCNN(**BASE_MODEL)
+            baseline_cost = compute_cost(baseline)
+            spec["parameters_added_vs_E1"] = spec["parameters"] - sum(p.numel() for p in baseline.parameters())
+            spec["compute"]["macs_added_vs_E1"] = spec["compute"]["macs_per_image"] - baseline_cost["macs_per_image"]
+            spec["compute"]["residual_additions_per_image"] = sum(
+                c * s * s for c, s in zip(config["model"]["channels"], (32, 16, 8, 4)))
     return spec
+
+
+def compute_cost(model):
+    macs = 0
+    handles = []
+
+    def count(module, inputs, output):
+        nonlocal macs
+        if isinstance(module, nn.Conv2d):
+            macs += output.numel() * (module.in_channels // module.groups) * module.kernel_size[0] * module.kernel_size[1]
+        elif isinstance(module, nn.Linear):
+            macs += output.numel() * module.in_features
+
+    for module in model.modules():
+        if isinstance(module, (nn.Conv2d, nn.Linear)):
+            handles.append(module.register_forward_hook(count))
+    was_training = model.training
+    try:
+        model.eval()
+        with torch.no_grad():
+            model(torch.zeros(1, 3, 32, 32))
+    finally:
+        for handle in handles:
+            handle.remove()
+        model.train(was_training)
+    return {"macs_per_image": macs, "multiply_add_flops_per_image": 2 * macs,
+            "scope": "Conv2d and Linear only; excludes BN, activations, pooling and elementwise operations"}
 
 
 def memory_estimate(config, parameters):
@@ -204,6 +262,11 @@ def memory_estimate(config, parameters):
             elements += batch * (head_channels + 4) * (8 if multiscale else 4) ** 2
         if config["ablation"]["experiment"] == "N3":
             elements += batch * (head_channels * (size * size + 3) + 8)
+    if config.get("protocol") == PROTOCOL:
+        elements += batch * 3 * 32 * 32 * 4
+        if config["structure"].get("residual"):
+            elements += batch * sum(c * s * s * 5 for c, s in zip(
+                config["model"]["channels"], (32, 16, 8, 4)))
     safety = config["safety"]
     values = {
         "precision": "float32", "batch_size": batch,
@@ -232,12 +295,19 @@ def gpu_preflight(config, directory):
     write_json(directory / "environment.json", environment)
     write_json(directory / "model.json", spec)
     report = {"requested_physical_gpu": config["gpu"], "estimate": estimate,
-              "status": "blocked", "blockers": [], "preflight_executed": False}
+              "status": "blocked", "blockers": [], "preflight_executed": False,
+              "config_sha256": fingerprint(config)}
     if not environment["cuda_available"]:
         report["blockers"].append("CUDA is unavailable in this Python environment")
     try:
         import torchvision
         report["torchvision_import"] = torchvision.__version__
+        if config.get("protocol") == PROTOCOL:
+            from PIL import Image
+            sample = training_transform(config["data"])(Image.new("RGB", (32, 32), (128, 128, 128)))
+            if tuple(sample.shape) != (3, 32, 32) or not torch.isfinite(sample).all():
+                raise ValueError("Training transforms produced invalid input")
+            report["training_transform_checked"] = True
     except Exception as exc:
         report["blockers"].append("torchvision import failed: " + str(exc))
     device_info = environment.get("selected_cuda_device")
@@ -256,26 +326,36 @@ def gpu_preflight(config, directory):
         print("Physical GPU {physical_index}: {name}; total {total_mib} MiB; "
               "free {free_mib} MiB".format(**gpu), flush=True)
     if not report["blockers"]:
-        model = inputs = labels = optimizer = loss = logits = None
+        model = inputs = labels = optimizer = loss = logits = scheduler = None
         try:
             seed_everything(config["seed"])
             torch.cuda.reset_peak_memory_stats(0)
             model = build_model(config).to("cuda:0").train()
-            optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["lr"],
-                                         weight_decay=config["training"]["weight_decay"],
-                                         foreach=False)
+            optimizer = make_optimizer(model, config)
+            scheduler = make_scheduler(optimizer, config)
             batch = config["training"]["batch_size"]
             inputs = torch.randn(batch, 3, 32, 32, device="cuda:0")
             labels = torch.randint(0, 10, (batch,), device="cuda:0")
+            inputs, labels, paired_labels, weight = mix_batch(
+                inputs, labels, config["training"].get("batch_mixing"), force=True)
             report["preflight_executed"] = True
             optimizer.zero_grad(set_to_none=True)
             logits = model(inputs)
             loss = nn.functional.cross_entropy(
                 logits, labels, label_smoothing=config["training"].get("label_smoothing", 0.0))
+            if paired_labels is not None:
+                loss = weight * loss + (1 - weight) * nn.functional.cross_entropy(logits, paired_labels)
             if not torch.isfinite(loss):
                 raise RuntimeError("Non-finite preflight loss")
             loss.backward()
             optimizer.step()
+            if scheduler is not None:
+                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    scheduler.step(float(loss.detach()))
+                else:
+                    scheduler.step()
+            report["optimizer"] = config["training"]["optimizer"]
+            report["scheduler_checked"] = True
             torch.cuda.synchronize(0)
             report["measured_peak_allocated_bytes"] = torch.cuda.max_memory_allocated(0)
             report["measured_peak_reserved_bytes"] = torch.cuda.max_memory_reserved(0)
@@ -297,7 +377,7 @@ def gpu_preflight(config, directory):
             report["status"] = "oom" if is_oom(exc) else "failed"
             report["blockers"].append(str(exc))
         finally:
-            model = inputs = labels = optimizer = loss = logits = None
+            model = inputs = labels = optimizer = loss = logits = paired_labels = scheduler = None
             gc.collect()
             torch.cuda.empty_cache()
     write_json(directory / "gpu_check.json", report)
@@ -307,7 +387,7 @@ def gpu_preflight(config, directory):
     return report["status"] == "passed"
 
 
-def run_epoch(model, loader, criterion, optimizer=None):
+def run_epoch(model, loader, criterion, optimizer=None, batch_mixing=None):
     training = optimizer is not None
     model.train(training)
     loss_sum, correct, count = 0.0, 0, 0
@@ -317,8 +397,13 @@ def run_epoch(model, loader, criterion, optimizer=None):
             labels = labels.to("cuda:0", non_blocking=True)
             if training:
                 optimizer.zero_grad(set_to_none=True)
+            paired_labels, weight = None, 1.0
+            if training:
+                inputs, labels, paired_labels, weight = mix_batch(inputs, labels, batch_mixing)
             logits = model(inputs)
             loss = criterion(logits, labels)
+            if paired_labels is not None:
+                loss = weight * loss + (1 - weight) * criterion(logits, paired_labels)
             if not torch.isfinite(loss):
                 raise RuntimeError("Non-finite loss")
             if training:
@@ -326,7 +411,10 @@ def run_epoch(model, loader, criterion, optimizer=None):
                 optimizer.step()
             batch = labels.size(0)
             loss_sum += loss.item() * batch
-            correct += (logits.argmax(1) == labels).sum().item()
+            predictions = logits.argmax(1)
+            correct += weight * (predictions == labels).sum().item()
+            if paired_labels is not None:
+                correct += (1 - weight) * (predictions == paired_labels).sum().item()
             count += batch
     if count != len(loader.dataset):
         raise RuntimeError("The epoch did not retain all samples")
@@ -428,8 +516,10 @@ def collect_outputs(model, loader, with_cams):
     def keep_maps(_module, _inputs, output):
         activation["maps"] = output
 
-    cam_layer = getattr(model, "cam_layer", model.head[2])
-    handle = cam_layer.register_forward_hook(keep_maps) if with_cams else None
+    handle = None
+    if with_cams:
+        cam_layer = getattr(model, "cam_layer", model.head[2])
+        handle = cam_layer.register_forward_hook(keep_maps)
     model.eval()
     try:
         for inputs, labels in loader:
@@ -518,8 +608,10 @@ def select_examples(base_dataset, indices, targets, details, cams, metrics, conf
 def evaluate_split(model, loader, directory, split, checkpoint, checkpoint_hash, config):
     metric_path = directory / (split + "_metrics.json")
     exported = split != "train_eval"
+    with_cams = exported and config["output"].get("compute_cams", True)
+    suffixes = ("_predictions.csv", "_outputs.npz") + (("_examples.npz",) if with_cams else ())
     artifacts = [directory / (split + suffix) for suffix in
-                 ("_predictions.csv", "_outputs.npz", "_examples.npz")] if exported else []
+                 suffixes] if exported else []
     if metric_path.exists():
         existing = json.loads(metric_path.read_text(encoding="utf-8"))
         if (existing.get("schema_version") != 2
@@ -531,7 +623,7 @@ def evaluate_split(model, loader, directory, split, checkpoint, checkpoint_hash,
         print("Reusing completed evaluation:", split, flush=True)
         return existing
     print("Evaluating best checkpoint:", split, flush=True)
-    indices, targets, logits, cams, base_dataset = collect_outputs(model, loader, exported)
+    indices, targets, logits, cams, base_dataset = collect_outputs(model, loader, with_cams)
     expected = {"train_eval": 45000, "val": 5000, "test": 10000}[split]
     if len(indices) != expected:
         raise RuntimeError("Unexpected evaluation sample count: " + split)
@@ -550,9 +642,13 @@ def evaluate_split(model, loader, directory, split, checkpoint, checkpoint_hash,
         "best_checkpoint_sha256": checkpoint_hash,
         "calibration_binning": "equal-width confidence bins; left-closed, final bin includes 1",
         "artifact_sha256": {},
+        "loss_definition": "ordinary hard-label cross entropy; no smoothing or mixed labels",
+        "cam_computed": with_cams,
+        "cat_to_dog": int(metrics["confusion_matrix"][3][5]),
+        "dog_to_cat": int(metrics["confusion_matrix"][5][3]),
     })
     if exported:
-        csv_path, raw_path, examples_path = artifacts
+        csv_path, raw_path = artifacts[:2]
         temporary = csv_path.with_name(csv_path.name + ".tmp")
         with temporary.open("w", newline="", encoding="utf-8") as stream:
             writer = csv.DictWriter(stream, fieldnames=PREDICTION_FIELDS)
@@ -566,17 +662,18 @@ def evaluate_split(model, loader, directory, split, checkpoint, checkpoint_hash,
                 writer.writerow(dict(zip(PREDICTION_FIELDS, values)))
         os.replace(temporary, csv_path)
         write_npz(raw_path, {"sample_index": indices, "true_label": targets, "logits": logits})
-        cache = select_examples(base_dataset, indices, targets, details, cams, metrics, config)
-        write_npz(examples_path, cache)
-        metrics["example_selection"] = {
-            "seed": config["seed"], "error_groups_disjoint": True,
-            "random_errors": "uniform sample without replacement",
-            "frequent_confusions": "median-confidence error from each leading directed confusion pair",
-            "high_confidence_errors": "highest-confidence errors remaining after other groups",
-            "cam_pairs": "correct/error pair from each highest-error true class; median confidence within each group",
-            "cam_feature_shape": [config["model"]["head_channels"], *cams.shape[-2:]],
-            "cam_values": "signed class-weighted activation sum before display ReLU and normalization",
-        }
+        if with_cams:
+            cache = select_examples(base_dataset, indices, targets, details, cams, metrics, config)
+            write_npz(artifacts[2], cache)
+            metrics["example_selection"] = {
+                "seed": config["seed"], "error_groups_disjoint": True,
+                "random_errors": "uniform sample without replacement",
+                "frequent_confusions": "median-confidence error from each leading directed confusion pair",
+                "high_confidence_errors": "highest-confidence errors remaining after other groups",
+                "cam_pairs": "correct/error pair from each highest-error true class; median confidence within each group",
+                "cam_feature_shape": [config["model"]["head_channels"], *cams.shape[-2:]],
+                "cam_values": "signed class-weighted activation sum before display ReLU and normalization",
+            }
         metrics["artifact_sha256"] = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
                                       for path in artifacts}
     write_json(metric_path, metrics)
@@ -589,7 +686,8 @@ def evaluate_split(model, loader, directory, split, checkpoint, checkpoint_hash,
 
 
 def evaluate_best(directory, config):
-    for split in ("val", "test"):
+    evaluate_test = config["output"].get("evaluate_test", True)
+    for split in (("val", "test") if evaluate_test else ("val",)):
         path = directory / (split + "_metrics.json")
         if path.exists() and json.loads(path.read_text(encoding="utf-8")).get("schema_version") != 2:
             raise FileExistsError("Preserving existing legacy evaluation: " + str(path))
@@ -607,19 +705,23 @@ def evaluate_best(directory, config):
     del train_loader
     val_metrics = evaluate_split(model, val_loader, directory, "val", checkpoint, checkpoint_hash, config)
     del val_loader
-    _, test_loader = test_data(config)
-    test_metrics = evaluate_split(model, test_loader, directory, "test", checkpoint, checkpoint_hash, config)
+    evaluated = [("train_eval", train_metrics), ("val", val_metrics)]
+    if evaluate_test:
+        _, test_loader = test_data(config)
+        test_metrics = evaluate_split(model, test_loader, directory, "test", checkpoint, checkpoint_hash, config)
+        evaluated.append(("test", test_metrics))
     summary = {
         "best_epoch": checkpoint["epoch"], "best_checkpoint_sha256": checkpoint_hash,
         "evaluation_mode": "same best checkpoint; eval mode; no augmentation; all samples",
         "train_val_accuracy_gap": train_metrics["accuracy"] - val_metrics["accuracy"],
         "val_accuracy_matches_checkpoint": abs(val_metrics["accuracy"] - checkpoint["val_accuracy"]) < 1e-12,
+        "test_evaluation_enabled": evaluate_test,
     }
-    for split, metrics in (("train_eval", train_metrics), ("val", val_metrics), ("test", test_metrics)):
+    for split, metrics in evaluated:
         summary[split] = {key: metrics[key] for key in
                           ("samples", "loss", "accuracy", "macro_f1", "ece", "multiclass_brier")}
     write_json(directory / "best_model_metrics.json", summary)
-    return test_metrics
+    return test_metrics if evaluate_test else val_metrics
 
 
 def failure_status(directory, exc):
@@ -631,10 +733,29 @@ def failure_status(directory, exc):
     print("Stopped ({}): {}".format(status, exc), file=sys.stderr, flush=True)
 
 
+def make_optimizer(model, config):
+    options = config["training"]
+    common = {"lr": options["lr"], "weight_decay": options["weight_decay"], "foreach": False}
+    if options["optimizer"] in ("Adam", "AdamW"):
+        optimizer = getattr(torch.optim, options["optimizer"])
+        return optimizer(model.parameters(), **common, betas=tuple(options.get("betas", (0.9, 0.999))),
+                         eps=options.get("eps", 1e-8))
+    if options["optimizer"] == "SGD":
+        return torch.optim.SGD(model.parameters(), **common, momentum=options.get("momentum", 0.0),
+                               nesterov=options.get("nesterov", False), dampening=0)
+    raise ValueError("Unsupported optimizer")
+
+
 def make_scheduler(optimizer, config):
     options = config["training"].get("scheduler")
     if options is None:
         return None
+    if config.get("protocol") == PROTOCOL:
+        if options["name"] == "plateau":
+            return torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, **{key: value for key, value in options.items() if key != "name"})
+        return torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=options["T_max"], eta_min=options["eta_min"])
     expected = {"name": "cosine", "T_max": 99, "eta_min": 0.00001}
     if options != expected or config["training"]["epochs"] != 100:
         raise ValueError("Ablations require 100 epochs and cosine scheduling to 0.00001")
@@ -653,7 +774,192 @@ def verify_ablation_split(config, split_info):
             raise ValueError("Ablation split differs from the existing baseline")
 
 
+def atomic_torch_save(path, value):
+    temporary = path.with_name(path.name + ".tmp")
+    torch.save(value, temporary)
+    os.replace(temporary, path)
+
+
+def rng_snapshot(train_loader, val_loader):
+    state = np.random.get_state()
+    return {"python": random.getstate(), "numpy": (state[0], state[1].tolist(), *state[2:]),
+            "torch": torch.get_rng_state(), "cuda": torch.cuda.get_rng_state_all(),
+            "train_loader": train_loader.generator.get_state(),
+            "val_loader": val_loader.generator.get_state()}
+
+
+def restore_rng(state, train_loader, val_loader):
+    random.setstate(state["python"])
+    numpy_state = state["numpy"]
+    np.random.set_state((numpy_state[0], np.asarray(numpy_state[1], dtype=np.uint32), *numpy_state[2:]))
+    torch.set_rng_state(state["torch"])
+    torch.cuda.set_rng_state_all(state["cuda"])
+    train_loader.generator.set_state(state["train_loader"])
+    val_loader.generator.set_state(state["val_loader"])
+
+
+def write_history(directory, history):
+    path = directory / "history.csv"
+    temporary = path.with_name(path.name + ".tmp")
+    with temporary.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=HISTORY_FIELDS)
+        writer.writeheader()
+        writer.writerows(history)
+    os.replace(temporary, path)
+
+
+def update_resources(directory, resources, history, completed=False):
+    resources.update({"completed_epochs": len(history), "training_completed": completed,
+                      "total_training_seconds": sum(row["seconds"] for row in history),
+                      "total_training_time_definition": "sum of completed training+validation epoch wall times",
+                      "peak_allocated_bytes": max(resources.get("peak_allocated_bytes", 0),
+                                                   torch.cuda.max_memory_allocated(0)),
+                      "peak_reserved_bytes": max(resources.get("peak_reserved_bytes", 0),
+                                                  torch.cuda.max_memory_reserved(0))})
+    write_json(directory / "resources.json", resources)
+
+
+def train_recipe(config, directory):
+    from run import validate_config
+
+    directory = Path(directory)
+    validate_config(config)
+    saved_config = json.loads((directory / "config.json").read_text(encoding="utf-8"))
+    if fingerprint(saved_config) != fingerprint(config):
+        raise ValueError("Refusing to overwrite a different experiment configuration")
+    check = json.loads((directory / "gpu_check.json").read_text(encoding="utf-8"))
+    if check["status"] != "passed" or check.get("config_sha256") != fingerprint(config):
+        raise ValueError("A matching successful GPU preflight is required")
+    history, resources = [], {}
+    try:
+        seed_everything(42)
+        train_loader, val_loader, split_info = training_data(config)
+        verify_ablation_split(config, split_info)
+        split_path = directory / "split_indices.npz"
+        if split_path.exists():
+            if hashlib.sha256(split_path.read_bytes()).hexdigest() != split_info["file_sha256"]:
+                raise ValueError("The stored split changed")
+        else:
+            shutil.copyfile(split_info["path"], split_path)
+        split_info["source_path"], split_info["path"] = split_info["path"], "split_indices.npz"
+        write_json(directory / "split.json", split_info)
+        model = build_model(config).to("cuda:0")
+        optimizer = make_optimizer(model, config)
+        scheduler = make_scheduler(optimizer, config)
+        criterion = nn.CrossEntropyLoss(label_smoothing=config["training"].get("label_smoothing", 0.0))
+        validation_criterion = nn.CrossEntropyLoss()
+        write_json(directory / "training_definition.json", training_definition(config))
+        write_json(directory / "optimizer.json", {"name": config["training"]["optimizer"],
+                                                   "defaults": optimizer.defaults})
+        last_path = directory / "last.pt"
+        best_accuracy, best_epoch, start = -1.0, 0, 0
+        if last_path.exists():
+            last = torch.load(last_path, map_location="cpu", weights_only=True)
+            if last["config_sha256"] != fingerprint(config):
+                raise ValueError("The resume checkpoint belongs to a different configuration")
+            history, resources = last["history"], last["resources"]
+            model.load_state_dict(last["model_state_dict"], strict=True)
+            optimizer.load_state_dict(last["optimizer_state_dict"])
+            scheduler.load_state_dict(last["scheduler_state_dict"])
+            start, best_epoch, best_accuracy = last["epoch"], last["best_epoch"], last["best_accuracy"]
+            if len(history) != start or start > config["training"]["epochs"]:
+                raise ValueError("Invalid saved epoch history")
+            if start and best_epoch == start:
+                repair_best = True
+                if (directory / "best.pt").is_file():
+                    try:
+                        best = torch.load(directory / "best.pt", map_location="cpu", weights_only=True)
+                        repair_best = not (best["epoch"] == best_epoch and best["val_accuracy"] == best_accuracy
+                                           and fingerprint(best["config"]) == fingerprint(config))
+                        del best
+                    except Exception:
+                        repair_best = True
+                if repair_best:
+                    save_checkpoint(directory / "best.pt", model, best_epoch, best_accuracy, config)
+            elif start:
+                best = torch.load(directory / "best.pt", map_location="cpu", weights_only=True)
+                if (best["epoch"] != best_epoch or best["val_accuracy"] != best_accuracy
+                        or fingerprint(best["config"]) != fingerprint(config)):
+                    raise ValueError("The saved best checkpoint is inconsistent with last.pt")
+                del best
+            restore_rng(last["rng"], train_loader, val_loader)
+            del last
+        else:
+            record_reproducibility(directory, config, model, split_info)
+        torch.cuda.reset_peak_memory_stats(0)
+        wall_started = time.perf_counter()
+        prior_wall = resources.get("total_training_wall_seconds", 0.0)
+
+        def persist(epoch):
+            resources["total_training_wall_seconds"] = prior_wall + time.perf_counter() - wall_started
+            resources["training_wall_time_definition"] = "training and validation plus checkpoint/log I/O; excludes preflight, setup and final evaluation"
+            update_resources(directory, resources, history, completed=epoch == config["training"]["epochs"])
+            atomic_torch_save(last_path, {
+                "model_state_dict": model.state_dict(), "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(), "config_sha256": fingerprint(config),
+                "epoch": epoch, "best_epoch": best_epoch, "best_accuracy": best_accuracy,
+                "history": history, "resources": resources, "rng": rng_snapshot(train_loader, val_loader)})
+
+        if not last_path.exists():
+            persist(0)
+        write_history(directory, history)
+        write_json(directory / "status.json", {"status": "training", "resumed_after_epoch": start})
+        for epoch in range(start + 1, config["training"]["epochs"] + 1):
+            torch.cuda.synchronize(0)
+            started = time.perf_counter()
+            lr = optimizer.param_groups[0]["lr"]
+            train_loss, train_accuracy, train_count = run_epoch(
+                model, train_loader, criterion, optimizer, config["training"].get("batch_mixing"))
+            val_loss, val_accuracy, val_count = run_epoch(model, val_loader, validation_criterion)
+            torch.cuda.synchronize(0)
+            history.append(dict(zip(HISTORY_FIELDS, (epoch, train_loss, train_accuracy, val_loss,
+                           val_accuracy, train_count, val_count, time.perf_counter() - started, lr))))
+            if val_accuracy > best_accuracy:
+                best_accuracy, best_epoch = val_accuracy, epoch
+            if epoch < config["training"]["epochs"]:
+                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    scheduler.step(val_loss)
+                else:
+                    scheduler.step()
+            persist(epoch)
+            if best_epoch == epoch:
+                save_checkpoint(directory / "best.pt", model, epoch, best_accuracy, config)
+            write_history(directory, history)
+            print("Epoch {:3d}/100 train {:.4f}/{:.2%} val {:.4f}/{:.2%} lr {:.8g}".format(
+                epoch, train_loss, train_accuracy, val_loss, val_accuracy, lr), flush=True)
+        resources["total_training_wall_seconds"] = prior_wall + time.perf_counter() - wall_started
+        update_resources(directory, resources, history, completed=True)
+        del model, optimizer, scheduler, criterion, train_loader, val_loader
+        gc.collect()
+        torch.cuda.empty_cache()
+        write_json(directory / "status.json", {"status": "evaluating_best"})
+        evaluate_best(directory, config)
+        write_json(directory / "status.json", {
+            "status": "completed", "config_sha256": fingerprint(config), "epochs_completed": 100,
+            "best_epoch": best_epoch, "best_val_accuracy": best_accuracy,
+            "test_evaluation": "disabled", "cam": "disabled", "plotting": "disabled"})
+        return 0
+    except KeyboardInterrupt:
+        write_json(directory / "status.json", {"status": "interrupted", "reason": "User interruption",
+                                               "resume": "last completed epoch from last.pt"})
+        raise
+    except Exception as exc:
+        failure_status(directory, exc)
+        try:
+            update_resources(directory, resources, history, completed=len(history) == config["training"]["epochs"])
+        except Exception:
+            pass
+        return 1
+
+
 def train(config, run_name):
+    if config.get("protocol") == PROTOCOL:
+        directory = new_directory(config["output"]["results_root"], run_name)
+        write_json(directory / "config.json", config)
+        if not gpu_preflight(config, directory):
+            write_json(directory / "status.json", {"status": "preflight_failed"})
+            return 2
+        return train_recipe(config, directory)
     directory = new_directory(config["output"]["results_root"], run_name)
     write_json(directory / "config.json", config)
     write_json(directory / "status.json", {"status": "checking_gpu"})
@@ -672,9 +978,7 @@ def train(config, run_name):
         write_json(directory / "split.json", split_info)
         model = build_model(config).to("cuda:0")
         record_reproducibility(directory, config, model, split_info)
-        optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["lr"],
-                                     weight_decay=config["training"]["weight_decay"],
-                                     foreach=False)
+        optimizer = make_optimizer(model, config)
         scheduler = make_scheduler(optimizer, config)
         criterion = nn.CrossEntropyLoss()
         train_criterion = nn.CrossEntropyLoss(

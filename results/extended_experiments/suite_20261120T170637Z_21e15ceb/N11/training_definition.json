@@ -1,0 +1,11 @@
+{
+  "training_loss": "cross entropy",
+  "label_smoothing": 0.02,
+  "batch_mixing": null,
+  "training_accuracy": "mean(1[pred=true hard label])",
+  "evaluation_loss": "ordinary cross entropy with true hard labels; no smoothing or mixing",
+  "evaluation_accuracy": "mean(1[pred=true hard label])",
+  "early_stopping": false,
+  "training_budget_epochs": 100,
+  "selection": "strictly highest validation accuracy; first epoch wins ties"
+}

@@ -1,0 +1,24 @@
+{
+  "best_epoch": 98,
+  "best_checkpoint_sha256": "066dc8b8de172f5ee1bc08cebee6cdf16bc41fea4b16c189b2b63c38df32f1d2",
+  "evaluation_mode": "same best checkpoint; eval mode; no augmentation; all samples",
+  "train_val_accuracy_gap": 0.061555555555555586,
+  "val_accuracy_matches_checkpoint": true,
+  "test_evaluation_enabled": false,
+  "train_eval": {
+    "samples": 45000,
+    "loss": 0.0028295932472547644,
+    "accuracy": 0.9993555555555556,
+    "macro_f1": 0.9993554789538939,
+    "ece": 0.0016565554850329627,
+    "multiclass_brier": 0.0009878348712180128
+  },
+  "val": {
+    "samples": 5000,
+    "loss": 0.2420213392673038,
+    "accuracy": 0.9378,
+    "macro_f1": 0.9376985150191336,
+    "ece": 0.0364920375297566,
+    "multiclass_brier": 0.10029637789199984
+  }
+}

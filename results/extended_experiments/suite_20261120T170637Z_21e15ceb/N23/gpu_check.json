@@ -1,0 +1,29 @@
+{
+  "requested_physical_gpu": 0,
+  "estimate": {
+    "precision": "float32",
+    "batch_size": 128,
+    "weights_gradients_adam_moments_bytes": 85257376,
+    "forward_activation_bytes": 431625216,
+    "activation_memory_multiplier": 6.0,
+    "activation_and_backward_budget_bytes": 2589751296,
+    "workspace_budget_bytes": 1073741824,
+    "context_budget_bytes": 536870912,
+    "estimated_peak_bytes": 4285621408
+  },
+  "status": "passed",
+  "blockers": [],
+  "preflight_executed": true,
+  "config_sha256": "a7e8ce1ce694c6a033a0dd262c38129a30e0fdc83cf0d28e5eab200a6d08fecc",
+  "torchvision_import": "0.25.0+cu128",
+  "training_transform_checked": true,
+  "reserve_bytes": 5086157209,
+  "free_bytes_before_preflight": 19881852928,
+  "optimizer": "Adam",
+  "scheduler_checked": true,
+  "measured_peak_allocated_bytes": 519354368,
+  "measured_peak_reserved_bytes": 538968064,
+  "free_bytes_after_step": 19223347200,
+  "measured_live_allocated_bytes": 158173184,
+  "budget_after_probe_bytes": 4285621408
+}

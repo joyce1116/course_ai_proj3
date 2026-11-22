@@ -1,0 +1,72 @@
+{
+  "name": "CifarCNN_N22",
+  "parameters": 5469706,
+  "trainable_parameters": 5469706,
+  "shapes": {
+    "input": [
+      "B",
+      3,
+      32,
+      32
+    ],
+    "stage1": [
+      "B",
+      64,
+      16,
+      16
+    ],
+    "stage2": [
+      "B",
+      128,
+      8,
+      8
+    ],
+    "stage3": [
+      "B",
+      256,
+      4,
+      4
+    ],
+    "stage4": [
+      "B",
+      384,
+      4,
+      4
+    ],
+    "channel_mapping": [
+      "B",
+      128,
+      4,
+      4
+    ],
+    "global_pool": [
+      "B",
+      128,
+      1,
+      1
+    ],
+    "logits": [
+      "B",
+      10
+    ],
+    "pre_pool": [
+      "B",
+      128,
+      4,
+      4
+    ]
+  },
+  "multiscale_fusion": false,
+  "spatial_attention": false,
+  "structure": {
+    "residual": true
+  },
+  "compute": {
+    "macs_per_image": 253887744,
+    "multiply_add_flops_per_image": 507775488,
+    "scope": "Conv2d and Linear only; excludes BN, activations, pooling and elementwise operations",
+    "macs_added_vs_E1": 5963776,
+    "residual_additions_per_image": 120832
+  },
+  "parameters_added_vs_E1": 141120
+}

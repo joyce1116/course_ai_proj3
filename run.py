@@ -81,8 +81,8 @@ def validate_config(config):
     integer(options["num_workers"], "num_workers", 0)
     number(options["lr"], "lr", 1e-12)
     number(options["weight_decay"], "weight_decay")
-    if options["optimizer"] != "Adam":
-        raise ValueError("Only Adam is supported by this basic experiment")
+    if options["optimizer"] not in ("Adam", "AdamW", "SGD"):
+        raise ValueError("Expected Adam, AdamW or SGD")
     model = config["model"]
     if len(model["channels"]) != 4 or len(model["depths"]) != 4:
         raise ValueError("Four stages are required")
@@ -119,6 +119,9 @@ def validate_config(config):
     if config["output"].get("cam_classes", 2) > 10:
         raise ValueError("cam_classes must not exceed ten")
     integer(config["output"]["figure_dpi"], "figure_dpi")
+    if "protocol" in config:
+        from recipes import validate_recipe
+        validate_recipe(config)
 
 
 def main():

@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-11-20T17:08:04.245331+00:00",
+  "python": "3.11.15 (main, Jun 11 2026, 15:20:16) [GCC 14.3.0]",
+  "executable": "/opt/conda/envs/muse/bin/python",
+  "platform": "Linux-3.10.0-957.el7.x86_64-x86_64-with-glibc2.35",
+  "packages": {
+    "torch": "2.10.0",
+    "torchvision": "0.25.0",
+    "numpy": "1.26.4",
+    "matplotlib": "3.7.5",
+    "Pillow": "12.1.1"
+  },
+  "torch_cuda_build": "12.8",
+  "cudnn_version": 91002,
+  "cuda_available": true,
+  "cuda_device_order": "PCI_BUS_ID",
+  "cuda_visible_devices": "0",
+  "pythonhashseed": "42",
+  "cublas_workspace_config": ":4096:8",
+  "command": [
+    "/home/homework_cxy/scripts/run_extended_experiments.py",
+    "--worker",
+    "check",
+    "--config",
+    "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22/config.json",
+    "--run-dir",
+    "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N22"
+  ],
+  "nvidia_smi": [
+    {
+      "physical_index": "0",
+      "uuid": "GPU-f53bd0ac-1ebb-9f08-ada4-2f4cf0c469a8",
+      "name": "NVIDIA GeForce RTX 3090",
+      "total_mib": "24576",
+      "free_mib": "19218",
+      "driver": "550.90.07"
+    }
+  ],
+  "selected_cuda_device": {
+    "logical_index": 0,
+    "name": "NVIDIA GeForce RTX 3090",
+    "total_bytes": 25430786048,
+    "free_bytes": 19881852928,
+    "compute_capability": [
+      8,
+      6
+    ]
+  }
+}

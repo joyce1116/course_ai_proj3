@@ -1,0 +1,115 @@
+{
+  "protocol": "n4-n28-v1",
+  "reference_run": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee",
+  "reference_config": {
+    "seed": 42,
+    "gpu": 0,
+    "model": {
+      "channels": [
+        64,
+        128,
+        256,
+        384
+      ],
+      "depths": [
+        2,
+        2,
+        3,
+        3
+      ],
+      "head_channels": 128,
+      "dropout": 0.3,
+      "num_classes": 10
+    },
+    "data": {
+      "root": "/home/homework_cxy/dataset",
+      "split_seed": 42,
+      "val_size": 5000,
+      "mean": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "std": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "crop_padding": 4,
+      "horizontal_flip_probability": 0.5,
+      "download": true,
+      "download_urls": [
+        "https://cave.cs.toronto.edu/kriz/cifar-10-python.tar.gz",
+        "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
+      ]
+    },
+    "training": {
+      "epochs": 100,
+      "batch_size": 128,
+      "optimizer": "Adam",
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "num_workers": 4,
+      "scheduler": {
+        "name": "cosine",
+        "T_max": 99,
+        "eta_min": 1e-05
+      }
+    },
+    "safety": {
+      "activation_memory_multiplier": 6.0,
+      "workspace_gib": 1.0,
+      "context_gib": 0.5,
+      "reserve_fraction": 0.2,
+      "min_reserve_gib": 1.0
+    },
+    "output": {
+      "results_root": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1",
+      "figures_root": "/home/homework_cxy/figures/ablations/suite_20261119T072348Z_e0a7c9de/E1",
+      "error_examples_per_group": 4,
+      "cam_classes": 2,
+      "calibration_bins": 10,
+      "top_confusions": 5,
+      "figure_dpi": 180
+    },
+    "ablation": {
+      "experiment": "E1",
+      "baseline_run": "/home/homework_cxy/results/basic/cifarcnn_20261118T160642Z_93925a89"
+    }
+  },
+  "experiments": [
+    "N4",
+    "N5",
+    "N6",
+    "N7",
+    "N8",
+    "N9",
+    "N10",
+    "N11",
+    "N12",
+    "N13",
+    "N14",
+    "N15",
+    "N16",
+    "N17",
+    "N18",
+    "N19",
+    "N20",
+    "N21",
+    "N22",
+    "N23",
+    "N24",
+    "N25",
+    "N26",
+    "N27",
+    "N28"
+  ],
+  "data_root": "/home/homework_cxy/dataset",
+  "num_workers": 4,
+  "no_download": false,
+  "reference_split_sha256": "595d8a14ead045d8368231026fb51e1608161e4f9d1ccd02d092321fbcbbf4dd",
+  "shared_assets_sha256": {
+    "shared/occlusion_positions.npz": "415e25ab1898feabe04f0d0778d3efefd48bfade6a76c7ccd535ac0b48c63ba9",
+    "shared/representative_samples.json": "6782988a318398d47114857f9d7bb67d239da4001f914a50b532a39b73a371e8"
+  }
+}
