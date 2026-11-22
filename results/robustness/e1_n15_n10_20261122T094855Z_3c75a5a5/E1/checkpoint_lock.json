@@ -1,0 +1,8 @@
+{
+  "experiment": "E1",
+  "checkpoint": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/best.pt",
+  "sha256": "1f00a3d7954ad648e78734fbcb80e487f048c3c1efee8f2801966e62196611bb",
+  "epoch": 99,
+  "best_val_accuracy": 0.9312,
+  "source_config_sha256": "74bcc405cfcf0b5e3b9dc5dea8154e3e953ba217f6e4a971d01ee9bafd15411d"
+}

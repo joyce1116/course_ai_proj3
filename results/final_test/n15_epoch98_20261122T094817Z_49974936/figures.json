@@ -1,0 +1,11 @@
+{
+  "directory": "/home/homework_cxy/figures/final_test/n15_epoch98_20261122T094817Z_49974936/plot_test_20261122T094830Z_95a64f74",
+  "files": [
+    "learning_curves.png",
+    "confusion_matrix.png",
+    "class_performance.png",
+    "confidence_diagnostics.png",
+    "error_cases.png",
+    "cam_comparison.png"
+  ]
+}

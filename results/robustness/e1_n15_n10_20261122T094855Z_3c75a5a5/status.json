@@ -1,0 +1,10 @@
+{
+  "status": "completed",
+  "test_set_evaluation": false,
+  "training_performed": false,
+  "models": {
+    "E1": "completed",
+    "N15": "completed",
+    "N10": "completed"
+  }
+}

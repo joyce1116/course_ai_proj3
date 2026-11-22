@@ -1,0 +1,8 @@
+{
+  "experiment": "N10",
+  "checkpoint": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/best.pt",
+  "sha256": "0656b17fe3dc0aa7a8d0b762c3a50ab49a7f1936b4595c5f2acfb62bc1685a0d",
+  "epoch": 94,
+  "best_val_accuracy": 0.9354,
+  "source_config_sha256": "167c04b85b23663f79a6b76f92a679571f9f1bbd5931dfcce24ce2195410013e"
+}

@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "checkpoint": {
+    "experiment": "N15",
+    "checkpoint": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/best.pt",
+    "sha256": "066dc8b8de172f5ee1bc08cebee6cdf16bc41fea4b16c189b2b63c38df32f1d2",
+    "epoch": 98,
+    "best_val_accuracy": 0.9378,
+    "source_config_sha256": "c6ed22f2b151577f25f3e365d9d3a5e2e896855feddd2b38506e9a3ebb711399"
+  },
+  "test_accuracy": 0.9343,
+  "figures": "/home/homework_cxy/figures/final_test/n15_epoch98_20261122T094817Z_49974936/plot_test_20261122T094830Z_95a64f74",
+  "training_performed": false
+}

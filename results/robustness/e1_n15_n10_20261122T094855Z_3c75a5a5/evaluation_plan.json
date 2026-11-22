@@ -1,0 +1,83 @@
+{
+  "protocol": "paired-val-robustness-v1",
+  "seed": 42,
+  "gpu": 0,
+  "reference_split_sha256": "595d8a14ead045d8368231026fb51e1608161e4f9d1ccd02d092321fbcbbf4dd",
+  "conditions": {
+    "clean": {
+      "kind": "clean"
+    },
+    "translate_left_2": {
+      "kind": "translation",
+      "dx": -2,
+      "fill_normalized": 0
+    },
+    "translate_right_2": {
+      "kind": "translation",
+      "dx": 2,
+      "fill_normalized": 0
+    },
+    "brightness_0.7": {
+      "kind": "brightness",
+      "factor": 0.7,
+      "clip_raw": [
+        0,
+        1
+      ]
+    },
+    "brightness_1.3": {
+      "kind": "brightness",
+      "factor": 1.3,
+      "clip_raw": [
+        0,
+        1
+      ]
+    },
+    "occlusion_4": {
+      "kind": "occlusion",
+      "size": 4,
+      "fill_normalized": 0
+    },
+    "occlusion_8": {
+      "kind": "occlusion",
+      "size": 8,
+      "fill_normalized": 0
+    }
+  },
+  "occlusion_positions_fingerprint": "e71863da134930e85bae26806c5b7b543bc428ca7dd07e2df0c28887439457d2",
+  "positions_source": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/shared/occlusion_positions.npz",
+  "checkpoints": {
+    "E1": {
+      "experiment": "E1",
+      "checkpoint": "/home/homework_cxy/results/ablations/suite_20261119T072348Z_e0a7c9de/E1/e1_20261119T072350Z_4f3ea7ee/best.pt",
+      "sha256": "1f00a3d7954ad648e78734fbcb80e487f048c3c1efee8f2801966e62196611bb",
+      "epoch": 99,
+      "best_val_accuracy": 0.9312,
+      "source_config_sha256": "74bcc405cfcf0b5e3b9dc5dea8154e3e953ba217f6e4a971d01ee9bafd15411d"
+    },
+    "N15": {
+      "experiment": "N15",
+      "checkpoint": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N15/best.pt",
+      "sha256": "066dc8b8de172f5ee1bc08cebee6cdf16bc41fea4b16c189b2b63c38df32f1d2",
+      "epoch": 98,
+      "best_val_accuracy": 0.9378,
+      "source_config_sha256": "c6ed22f2b151577f25f3e365d9d3a5e2e896855feddd2b38506e9a3ebb711399"
+    },
+    "N10": {
+      "experiment": "N10",
+      "checkpoint": "/home/homework_cxy/results/extended_experiments/suite_20261120T170637Z_21e15ceb/N10/best.pt",
+      "sha256": "0656b17fe3dc0aa7a8d0b762c3a50ab49a7f1936b4595c5f2acfb62bc1685a0d",
+      "epoch": 94,
+      "best_val_accuracy": 0.9354,
+      "source_config_sha256": "167c04b85b23663f79a6b76f92a679571f9f1bbd5931dfcce24ce2195410013e"
+    }
+  },
+  "config_sha256": {
+    "E1": "c01b3b5769082e2cde7a7a0e0273de1bd540572ff6be14a8aff01d15f9eaaa48",
+    "N15": "020ef96049f3018b53f8a349143b2227b58d5d889928618711e66ce547cfd91a",
+    "N10": "066ae7a2dda3b59cc782ec5bb41ca3191ffde1ea9283647e0be84ad7362d315b"
+  },
+  "test_set_evaluation": false,
+  "training": false,
+  "test_time_augmentation": false
+}

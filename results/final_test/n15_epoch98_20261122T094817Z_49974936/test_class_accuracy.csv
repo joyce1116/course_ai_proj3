@@ -1,0 +1,11 @@
+class,samples,accuracy
+airplane,1000,0.943
+automobile,1000,0.971
+bird,1000,0.927
+cat,1000,0.847
+deer,1000,0.948
+dog,1000,0.864
+frog,1000,0.956
+horse,1000,0.953
+ship,1000,0.969
+truck,1000,0.965
