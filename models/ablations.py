@@ -3,19 +3,15 @@ from torch import nn
 from torch.nn import functional as F
 
 from models.cnn import CifarCNN
-from recipes import RECIPES
+from recipes import ADDITIONAL_EXPERIMENTS, COMPLETE_MODEL, experiment_name, uses_recipe_model
 
 
-EXPERIMENTS = {
-    "E1": (False, False),
-    "E2": (True, False),
-    "E3": (False, True),
-    "E4": (True, True),
-    "N1": (False, False),
-    "N2": (False, False),
-    "N3": (False, False),
+STRUCTURAL_COMPARISONS = {
+    "multiscale_fusion": (True, False),
+    "spatial_attention": (False, True),
+    "multiscale_fusion_spatial_attention": (True, True),
+    "head_se": (False, False),
 }
-EXPERIMENTS.update({name: (False, False) for name in RECIPES})
 
 
 def projection(in_channels, out_channels):
@@ -76,7 +72,7 @@ class SqueezeExcitation(nn.Module):
 class AblationCNN(CifarCNN):
     def __init__(self, experiment, **options):
         super().__init__(**options)
-        multiscale, attention = EXPERIMENTS[experiment]
+        multiscale, attention = STRUCTURAL_COMPARISONS[experiment]
         original_head = list(self.head.children())
         mapping = nn.Sequential(*original_head[:3])
         self.fusion = (MultiScaleFusion(self.stages[1][0].out_channels,
@@ -84,7 +80,7 @@ class AblationCNN(CifarCNN):
                        if multiscale else None)
         if not multiscale:
             self.channel_mapping = mapping
-        if experiment == "N3":
+        if experiment == "head_se":
             self.pre_pool = SqueezeExcitation(original_head[0].out_channels, 8)
         else:
             self.pre_pool = SpatialAttention() if attention else nn.Identity()
@@ -161,11 +157,11 @@ class RecipeCNN(CifarCNN):
 
 
 def build_model(config):
-    experiment = config.get("ablation", {}).get("experiment")
-    if experiment in RECIPES:
+    experiment = experiment_name(config)
+    if uses_recipe_model(config):
         return RecipeCNN(config["structure"], **config["model"])
-    if experiment is None or experiment in ("E1", "N1", "N2"):
+    if experiment in STRUCTURAL_COMPARISONS:
+        return AblationCNN(experiment, **config["model"])
+    if experiment == COMPLETE_MODEL or experiment in ADDITIONAL_EXPERIMENTS:
         return CifarCNN(**config["model"])
-    if experiment not in EXPERIMENTS:
-        raise ValueError("Unknown ablation: " + str(experiment))
-    return AblationCNN(experiment, **config["model"])
+    raise ValueError("Unknown experiment: " + str(experiment))

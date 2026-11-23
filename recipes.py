@@ -4,7 +4,11 @@ import json
 from pathlib import Path
 
 
-PROTOCOL = "n4-n28-v1"
+ROOT = Path(__file__).resolve().parent
+FINAL_CONFIG = ROOT / "config" / "final.json"
+COMPLETE_MODEL = "complete_model"
+ADDITIONAL_PROTOCOL = "additional-experiments-v1"
+LEGACY_PROTOCOL = "n4-n28-v1"
 ERASING = {"p": 0.25, "scale": [0.02, 0.15], "ratio": [0.3, 3.3], "value": 0, "inplace": False}
 COSINE = {"name": "cosine", "T_max": 99, "eta_min": 0.00001}
 BASE_MODEL = {"channels": [64, 128, 256, 384], "depths": [2, 2, 3, 3],
@@ -13,42 +17,87 @@ BASE_TRAINING = {"epochs": 100, "batch_size": 128, "optimizer": "Adam", "lr": 0.
                  "weight_decay": 0.0001, "scheduler": COSINE}
 BASE_DATA = {"split_seed": 42, "val_size": 5000, "mean": [0.5] * 3, "std": [0.5] * 3,
              "crop_padding": 4, "horizontal_flip_probability": 0.5}
-RECIPES = {
-    "N4": {"data": {"random_erasing": ERASING}, "structure": {"se": "head"}},
-    "N5": {"training": {"label_smoothing": 0.05}},
-    "N6": {"data": {"random_erasing": ERASING}, "training": {"label_smoothing": 0.05}},
-    "N7": {"structure": {"se": "head"}, "training": {"label_smoothing": 0.05}},
-    "N8": {"data": {"random_erasing": ERASING}, "structure": {"se": "head"},
-           "training": {"label_smoothing": 0.05}},
-    "N9": {"data": {"random_erasing": {**ERASING, "p": 0.10}}},
-    "N10": {"data": {"random_erasing": {**ERASING, "p": 0.50}}},
-    "N11": {"training": {"label_smoothing": 0.02}},
-    "N12": {"training": {"label_smoothing": 0.20}},
-    "N13": {"training": {"batch_mixing": {"name": "mixup", "alpha": 0.2, "probability": 1.0}}},
-    "N14": {"training": {"batch_mixing": {"name": "cutmix", "alpha": 1.0, "probability": 0.5}}},
-    "N15": {"data": {"randaugment": {"num_ops": 2, "magnitude": 9,
-                                      "interpolation": "bilinear", "fill": 128}}},
-    "N16": {"data": {"color_jitter": {"brightness": 0.2, "contrast": 0.2,
-                                       "saturation": 0.2, "hue": 0.05}}},
-    "N17": {"structure": {"se": "head", "spatial_attention": True}},
-    "N18": {"structure": {"se": "stage2"}},
-    "N19": {"structure": {"global_pool": "max"}},
-    "N20": {"structure": {"global_pool": "avgmax"}},
-    "N21": {"structure": {"downsampling": "avg"}},
-    "N22": {"structure": {"residual": True}},
-    "N23": {"model": {"dropout": 0.0}},
-    "N24": {"model": {"dropout": 0.5}},
-    "N25": {"training": {"optimizer": "AdamW"}},
-    "N26": {"training": {"optimizer": "AdamW", "weight_decay": 0.01}},
-    "N27": {"training": {"optimizer": "SGD", "momentum": 0.9, "nesterov": False,
-                          "lr": 0.05, "scheduler": {**COSINE, "eta_min": 0.0005}}},
-    "N28": {"training": {"scheduler": {"name": "plateau", "mode": "min", "factor": 0.5,
-                          "patience": 5, "threshold": 0.0001, "threshold_mode": "abs",
-                          "cooldown": 0, "min_lr": 0.00001}}},
+ADDITIONAL_EXPERIMENTS = {
+    "fixed_learning_rate": {},
+    "without_randaugment": {},
+    "multiscale_fusion": {},
+    "spatial_attention": {},
+    "multiscale_fusion_spatial_attention": {},
+    "random_erasing_025": {"data": {"random_erasing": ERASING}},
+    "label_smoothing_010": {"training": {"label_smoothing": 0.10}},
+    "head_se": {},
+    "random_erasing_head_se": {"data": {"random_erasing": ERASING}, "structure": {"se": "head"}},
+    "label_smoothing_005": {"training": {"label_smoothing": 0.05}},
+    "random_erasing_label_smoothing": {
+        "data": {"random_erasing": ERASING}, "training": {"label_smoothing": 0.05}},
+    "head_se_label_smoothing": {"structure": {"se": "head"}, "training": {"label_smoothing": 0.05}},
+    "random_erasing_head_se_label_smoothing": {
+        "data": {"random_erasing": ERASING}, "structure": {"se": "head"},
+        "training": {"label_smoothing": 0.05}},
+    "random_erasing_010": {"data": {"random_erasing": {**ERASING, "p": 0.10}}},
+    "random_erasing_050": {"data": {"random_erasing": {**ERASING, "p": 0.50}}},
+    "label_smoothing_002": {"training": {"label_smoothing": 0.02}},
+    "label_smoothing_020": {"training": {"label_smoothing": 0.20}},
+    "mixup": {"training": {"batch_mixing": {"name": "mixup", "alpha": 0.2, "probability": 1.0}}},
+    "cutmix": {"training": {"batch_mixing": {"name": "cutmix", "alpha": 1.0, "probability": 0.5}}},
+    "color_jitter": {"data": {"color_jitter": {"brightness": 0.2, "contrast": 0.2,
+                                               "saturation": 0.2, "hue": 0.05}}},
+    "head_se_spatial_attention": {"structure": {"se": "head", "spatial_attention": True}},
+    "stage2_se": {"structure": {"se": "stage2"}},
+    "global_max_pooling": {"structure": {"global_pool": "max"}},
+    "global_average_max_pooling": {"structure": {"global_pool": "avgmax"}},
+    "average_downsampling": {"structure": {"downsampling": "avg"}},
+    "stage_residual": {"structure": {"residual": True}},
+    "dropout_0": {"model": {"dropout": 0.0}},
+    "dropout_05": {"model": {"dropout": 0.5}},
+    "adamw_1e4": {"training": {"optimizer": "AdamW"}},
+    "adamw_1e2": {"training": {"optimizer": "AdamW", "weight_decay": 0.01}},
+    "momentum_sgd": {"training": {"optimizer": "SGD", "momentum": 0.9, "nesterov": False,
+                                  "lr": 0.05, "scheduler": {**COSINE, "eta_min": 0.0005}}},
+    "validation_loss_scheduler": {
+        "training": {"scheduler": {"name": "plateau", "mode": "min", "factor": 0.5,
+                                   "patience": 5, "threshold": 0.0001, "threshold_mode": "abs",
+                                   "cooldown": 0, "min_lr": 0.00001}}},
 }
-COMPARISONS = {"N4": ["E1", "N1", "N3"], "N6": ["E1", "N1", "N5"],
-               "N7": ["E1", "N3", "N5"], "N8": ["E1", "N1", "N3", "N5", "N4", "N6", "N7"],
-               "N17": ["E1", "N3", "E3"]}
+
+# Saved results and checkpoints retain their original identities and fingerprints.
+ARCHIVE_NAMES = {
+    "basic": "fixed_learning_rate", "E1": "without_randaugment", "E2": "multiscale_fusion",
+    "E3": "spatial_attention", "E4": "multiscale_fusion_spatial_attention",
+    "N1": "random_erasing_025", "N2": "label_smoothing_010", "N3": "head_se",
+    "N4": "random_erasing_head_se", "N5": "label_smoothing_005",
+    "N6": "random_erasing_label_smoothing", "N7": "head_se_label_smoothing",
+    "N8": "random_erasing_head_se_label_smoothing", "N9": "random_erasing_010",
+    "N10": "random_erasing_050", "N11": "label_smoothing_002", "N12": "label_smoothing_020",
+    "N13": "mixup", "N14": "cutmix", "N15": COMPLETE_MODEL, "N16": "color_jitter",
+    "N17": "head_se_spatial_attention", "N18": "stage2_se", "N19": "global_max_pooling",
+    "N20": "global_average_max_pooling", "N21": "average_downsampling", "N22": "stage_residual",
+    "N23": "dropout_0", "N24": "dropout_05", "N25": "adamw_1e4", "N26": "adamw_1e2",
+    "N27": "momentum_sgd", "N28": "validation_loss_scheduler",
+}
+TESTED_COMPARISONS = frozenset({
+    "fixed_learning_rate", "without_randaugment", "multiscale_fusion", "spatial_attention",
+    "multiscale_fusion_spatial_attention", "random_erasing_025", "label_smoothing_010", "head_se",
+})
+NO_COMPARISON_PLOTS = frozenset({"random_erasing_025", "label_smoothing_010", "head_se"})
+RAND_AUGMENT = {"num_ops": 2, "magnitude": 9, "interpolation": "bilinear", "fill": 128}
+
+
+def experiment_name(config):
+    if "experiment" in config:
+        return config["experiment"]
+    archived = config.get("ablation", {}).get("experiment", "basic")
+    return ARCHIVE_NAMES.get(archived, archived)
+
+
+def is_resumable(config):
+    return config.get("protocol") in (ADDITIONAL_PROTOCOL, LEGACY_PROTOCOL)
+
+
+def uses_recipe_model(config):
+    name = experiment_name(config)
+    return ((name in ADDITIONAL_EXPERIMENTS and name not in TESTED_COMPARISONS)
+            or (name == COMPLETE_MODEL and "ablation" in config))
 
 
 def fingerprint(config):
@@ -56,66 +105,72 @@ def fingerprint(config):
                                      allow_nan=False).encode("utf-8")).hexdigest()
 
 
-def validate_e1(config):
-    if config.get("seed") != 42 or config.get("ablation", {}).get("experiment") != "E1":
-        raise ValueError("The reference must be the original E1 with seed 42")
+def validate_reference(config):
+    if config.get("seed") != 42 or experiment_name(config) != "without_randaugment":
+        raise ValueError("The reference must be the model without RandAugment with seed 42")
     if config["model"] != BASE_MODEL:
-        raise ValueError("The reference model differs from E1")
+        raise ValueError("The reference architecture differs from the complete model")
     expected = {**BASE_TRAINING, "num_workers": config["training"]["num_workers"]}
     if config["training"] != expected:
-        raise ValueError("The reference training settings differ from E1")
+        raise ValueError("The reference training settings differ from the complete model")
     data = {key: value for key, value in config["data"].items()
             if key not in ("root", "download", "download_urls")}
     if data != BASE_DATA:
-        raise ValueError("The reference split, normalization or augmentation differs from E1")
+        raise ValueError("The reference must use the shared split, normalization and basic augmentation")
 
 
-def make_config(base, name, reference, suite, data_root=None, workers=None, no_download=False):
-    validate_e1(base)
-    if name not in RECIPES:
+def make_additional_config(name, results_root, figures_root, *, data_root=None, workers=None,
+                           no_download=False, gpu=0):
+    if name not in ADDITIONAL_EXPERIMENTS:
         raise ValueError("Unknown experiment: " + name)
-    config = copy.deepcopy(base)
-    config["protocol"] = PROTOCOL
-    config["seed"], config["gpu"] = 42, 0
-    config["ablation"] = {"experiment": name, "baseline_run": str(Path(reference).resolve())}
+    config = json.loads(FINAL_CONFIG.read_text(encoding="utf-8"))
+    config.update(experiment=name, gpu=gpu, protocol=ADDITIONAL_PROTOCOL)
+    config["data"].pop("randaugment")
     config["structure"] = {}
-    for section, changes in RECIPES[name].items():
+    if name == "fixed_learning_rate":
+        config["training"].pop("scheduler")
+    for section, changes in ADDITIONAL_EXPERIMENTS[name].items():
         config[section].update(copy.deepcopy(changes))
-    if data_root is not None:
-        config["data"]["root"] = str(Path(data_root).resolve())
+    config["data"]["root"] = str(Path(data_root or ROOT / config["data"]["root"]).resolve())
     if workers is not None:
         config["training"]["num_workers"] = workers
     if no_download:
         config["data"]["download"] = False
-    config["output"].update({"results_root": str(Path(suite).resolve()), "plot": False,
-                              "evaluate_test": False, "compute_cams": False})
-    config["output"]["figures_root"] = str(Path(suite).resolve() / "unused_figures")
-    validate_recipe(config)
+    evaluate_test = name in TESTED_COMPARISONS
+    config["output"].update({"results_root": str(Path(results_root).resolve()),
+                             "figures_root": str(Path(figures_root).resolve()),
+                             "plot": evaluate_test and name not in NO_COMPARISON_PLOTS,
+                             "evaluate_test": evaluate_test, "compute_cams": evaluate_test})
     return config
 
 
 def validate_recipe(config):
-    name = config.get("ablation", {}).get("experiment")
-    if config.get("protocol") != PROTOCOL or name not in RECIPES:
+    name = experiment_name(config)
+    if config.get("protocol") == LEGACY_PROTOCOL and name == COMPLETE_MODEL:
+        recipe = {"data": {"randaugment": RAND_AUGMENT}}
+    elif is_resumable(config) and name in ADDITIONAL_EXPERIMENTS:
+        recipe = ADDITIONAL_EXPERIMENTS[name]
+    else:
         raise ValueError("Unknown recipe protocol or experiment")
-    expected_model = {**BASE_MODEL, **RECIPES[name].get("model", {})}
+    expected_model = {**BASE_MODEL, **recipe.get("model", {})}
     expected_training = {**BASE_TRAINING, "num_workers": config["training"]["num_workers"],
-                         **RECIPES[name].get("training", {})}
-    expected_data = {**BASE_DATA, **RECIPES[name].get("data", {})}
+                         **recipe.get("training", {})}
+    if name == "fixed_learning_rate":
+        expected_training.pop("scheduler")
+    expected_data = {**BASE_DATA, **recipe.get("data", {})}
     actual_data = {key: value for key, value in config["data"].items()
                    if key not in ("root", "download", "download_urls")}
-    if config["seed"] != 42 or config["gpu"] != 0 or config["model"] != expected_model:
-        raise ValueError(name + " must preserve its prescribed seed, GPU and model")
+    if config["seed"] != 42 or config["model"] != expected_model:
+        raise ValueError(name + " must preserve its prescribed seed and model")
     if config["training"] != expected_training or actual_data != expected_data:
         raise ValueError(name + " contains missing or mixed training/data changes")
-    if config.get("structure") != RECIPES[name].get("structure", {}):
+    if config.get("structure") != recipe.get("structure", {}):
         raise ValueError(name + " contains missing or mixed structure changes")
-    if any(config["output"].get(key) is not False
-           for key in ("plot", "evaluate_test", "compute_cams")):
-        raise ValueError("Recipes disable plots, test evaluation and CAM")
-    workers = config["training"]["num_workers"]
-    if isinstance(workers, bool) or not isinstance(workers, int) or workers < 0:
-        raise ValueError("num_workers must be a nonnegative integer")
+    expected_output = name in TESTED_COMPARISONS and config.get("protocol") == ADDITIONAL_PROTOCOL
+    if (config["output"].get("evaluate_test") is not expected_output
+            or config["output"].get("compute_cams") is not expected_output
+            or config["output"].get("plot") is not (expected_output and name not in NO_COMPARISON_PLOTS)):
+        raise ValueError("Unexpected evaluation or plotting settings for " + name)
 
 
 def training_definition(config):

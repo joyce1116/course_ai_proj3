@@ -1,6 +1,7 @@
 {
+  "experiment": "complete_model",
   "seed": 42,
-  "gpu": 2,
+  "gpu": 0,
   "model": {
     "channels": [64, 128, 256, 384],
     "depths": [2, 2, 3, 3],
@@ -16,6 +17,12 @@
     "std": [0.5, 0.5, 0.5],
     "crop_padding": 4,
     "horizontal_flip_probability": 0.5,
+    "randaugment": {
+      "num_ops": 2,
+      "magnitude": 9,
+      "interpolation": "bilinear",
+      "fill": 128
+    },
     "download": true,
     "download_urls": [
       "https://cave.cs.toronto.edu/kriz/cifar-10-python.tar.gz",
@@ -28,7 +35,12 @@
     "optimizer": "Adam",
     "lr": 0.001,
     "weight_decay": 0.0001,
-    "num_workers": 4
+    "num_workers": 4,
+    "scheduler": {
+      "name": "cosine",
+      "T_max": 99,
+      "eta_min": 0.00001
+    }
   },
   "safety": {
     "activation_memory_multiplier": 6.0,
@@ -38,8 +50,11 @@
     "min_reserve_gib": 1.0
   },
   "output": {
-    "results_root": "results/basic",
-    "figures_root": "figures/basic",
+    "results_root": "results/complete_model",
+    "figures_root": "figures/complete_model",
+    "evaluate_test": true,
+    "compute_cams": true,
+    "plot": true,
     "error_examples_per_group": 4,
     "cam_classes": 2,
     "calibration_bins": 10,

@@ -20,8 +20,9 @@ import torch
 from torch import nn
 
 from data import CLASSES, evaluation_data, mix_batch, test_data, training_data, training_transform
-from models.ablations import EXPERIMENTS, build_model
-from recipes import BASE_MODEL, PROTOCOL, RECIPES, fingerprint, training_definition
+from models.ablations import STRUCTURAL_COMPARISONS, build_model
+from recipes import (BASE_MODEL, COMPLETE_MODEL, experiment_name, fingerprint, is_resumable,
+                     training_definition, uses_recipe_model)
 from visualization import plot_results
 
 
@@ -52,13 +53,11 @@ def write_npz(path, values):
 def record_reproducibility(directory, config, model, split_info):
     source_root = Path(__file__).resolve().parent
     files = ("run.py", "data.py", "experiment.py", "visualization.py", "models/cnn.py",
-             "config/basic.json", "scripts/run_basic.sh", "requirements.txt")
-    if "ablation" in config:
-        files += ("models/ablations.py", "scripts/run_ablations.py")
-    if config.get("ablation", {}).get("experiment") in ("N1", "N2", "N3"):
-        files += ("scripts/run_n_experiments.py",)
-    if config.get("protocol") == PROTOCOL:
-        files += ("recipes.py", "scripts/run_extended_experiments.py")
+             "models/ablations.py", "recipes.py", "config/final.json", "requirements.txt")
+    if experiment_name(config) == COMPLETE_MODEL:
+        files += ("scripts/run_final_model.py",)
+    else:
+        files += ("scripts/run_additional_experiments.py",)
     version = {}
     for key, command in (("commit", ["git", "rev-parse", "HEAD"]),
                          ("working_tree", ["git", "status", "--porcelain"])):
@@ -154,6 +153,7 @@ def environment_info():
 
 def model_info(config):
     model = build_model(config)
+    name = experiment_name(config)
     channels = config["model"]["channels"]
     head_channels = config["model"]["head_channels"]
     spec = {
@@ -172,11 +172,11 @@ def model_info(config):
             "logits": ["B", config["model"]["num_classes"]],
         },
     }
-    if "ablation" in config:
-        experiment = config["ablation"]["experiment"]
-        multiscale, attention = EXPERIMENTS[experiment]
+    spec["experiment"] = name
+    if name in STRUCTURAL_COMPARISONS:
+        multiscale, attention = STRUCTURAL_COMPARISONS[name]
         size = 8 if multiscale else 4
-        spec["name"] = "CifarCNN_" + experiment
+        spec["name"] = "CifarCNN_" + name
         spec["multiscale_fusion"] = multiscale
         spec["spatial_attention"] = attention
         spec["shapes"]["pre_pool"] = ["B", head_channels, size, size]
@@ -187,12 +187,12 @@ def model_info(config):
             spec["shapes"]["fusion"] = ["B", head_channels, 8, 8]
         if attention:
             spec["shapes"]["spatial_weights"] = ["B", 1, size, size]
-        if experiment == "N3":
+        if name == "head_se":
             spec["se_channel_attention"] = True
             spec["shapes"]["se_descriptor"] = ["B", head_channels]
             spec["shapes"]["se_hidden"] = ["B", 8]
             spec["shapes"]["se_weights"] = ["B", head_channels, 1, 1]
-    if config.get("protocol") == PROTOCOL:
+    if uses_recipe_model(config):
         spec["structure"] = config["structure"]
         spec["spatial_attention"] = config["structure"].get("spatial_attention", False)
         if config["structure"].get("se"):
@@ -207,8 +207,10 @@ def model_info(config):
             from models.cnn import CifarCNN
             baseline = CifarCNN(**BASE_MODEL)
             baseline_cost = compute_cost(baseline)
-            spec["parameters_added_vs_E1"] = spec["parameters"] - sum(p.numel() for p in baseline.parameters())
-            spec["compute"]["macs_added_vs_E1"] = spec["compute"]["macs_per_image"] - baseline_cost["macs_per_image"]
+            spec["parameters_added_vs_without_randaugment"] = spec["parameters"] - sum(
+                p.numel() for p in baseline.parameters())
+            spec["compute"]["macs_added_vs_without_randaugment"] = (
+                spec["compute"]["macs_per_image"] - baseline_cost["macs_per_image"])
             spec["compute"]["residual_additions_per_image"] = sum(
                 c * s * s for c, s in zip(config["model"]["channels"], (32, 16, 8, 4)))
     return spec
@@ -253,16 +255,17 @@ def memory_estimate(config, parameters):
             elements += batch * channels * size * size
     elements += batch * config["model"]["head_channels"] * (size * size * 3 + 2)
     elements += batch * config["model"]["num_classes"]
-    if "ablation" in config:
-        multiscale, attention = EXPERIMENTS[config["ablation"]["experiment"]]
+    name = experiment_name(config)
+    if name in STRUCTURAL_COMPARISONS:
+        multiscale, attention = STRUCTURAL_COMPARISONS[name]
         head_channels = config["model"]["head_channels"]
         if multiscale:
             elements += batch * head_channels * 8 * 8 * 10
         if attention:
             elements += batch * (head_channels + 4) * (8 if multiscale else 4) ** 2
-        if config["ablation"]["experiment"] == "N3":
+        if name == "head_se":
             elements += batch * (head_channels * (size * size + 3) + 8)
-    if config.get("protocol") == PROTOCOL:
+    if uses_recipe_model(config):
         elements += batch * 3 * 32 * 32 * 4
         if config["structure"].get("residual"):
             elements += batch * sum(c * s * s * 5 for c, s in zip(
@@ -302,7 +305,7 @@ def gpu_preflight(config, directory):
     try:
         import torchvision
         report["torchvision_import"] = torchvision.__version__
-        if config.get("protocol") == PROTOCOL:
+        if is_resumable(config) or experiment_name(config) == COMPLETE_MODEL:
             from PIL import Image
             sample = training_transform(config["data"])(Image.new("RGB", (32, 32), (128, 128, 128)))
             if tuple(sample.shape) != (3, 32, 32) or not torch.isfinite(sample).all():
@@ -750,17 +753,13 @@ def make_scheduler(optimizer, config):
     options = config["training"].get("scheduler")
     if options is None:
         return None
-    if config.get("protocol") == PROTOCOL:
-        if options["name"] == "plateau":
-            return torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer, **{key: value for key, value in options.items() if key != "name"})
+    if options["name"] == "plateau":
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, **{key: value for key, value in options.items() if key != "name"})
+    if options["name"] == "cosine":
         return torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=options["T_max"], eta_min=options["eta_min"])
-    expected = {"name": "cosine", "T_max": 99, "eta_min": 0.00001}
-    if options != expected or config["training"]["epochs"] != 100:
-        raise ValueError("Ablations require 100 epochs and cosine scheduling to 0.00001")
-    return torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=options["T_max"], eta_min=options["eta_min"])
+    raise ValueError("Unsupported learning-rate scheduler: " + str(options["name"]))
 
 
 def verify_ablation_split(config, split_info):
@@ -860,7 +859,8 @@ def train_recipe(config, directory):
             history, resources = last["history"], last["resources"]
             model.load_state_dict(last["model_state_dict"], strict=True)
             optimizer.load_state_dict(last["optimizer_state_dict"])
-            scheduler.load_state_dict(last["scheduler_state_dict"])
+            if scheduler is not None:
+                scheduler.load_state_dict(last["scheduler_state_dict"])
             start, best_epoch, best_accuracy = last["epoch"], last["best_epoch"], last["best_accuracy"]
             if len(history) != start or start > config["training"]["epochs"]:
                 raise ValueError("Invalid saved epoch history")
@@ -896,7 +896,8 @@ def train_recipe(config, directory):
             update_resources(directory, resources, history, completed=epoch == config["training"]["epochs"])
             atomic_torch_save(last_path, {
                 "model_state_dict": model.state_dict(), "optimizer_state_dict": optimizer.state_dict(),
-                "scheduler_state_dict": scheduler.state_dict(), "config_sha256": fingerprint(config),
+                "scheduler_state_dict": scheduler.state_dict() if scheduler is not None else None,
+                "config_sha256": fingerprint(config),
                 "epoch": epoch, "best_epoch": best_epoch, "best_accuracy": best_accuracy,
                 "history": history, "resources": resources, "rng": rng_snapshot(train_loader, val_loader)})
 
@@ -916,7 +917,7 @@ def train_recipe(config, directory):
                            val_accuracy, train_count, val_count, time.perf_counter() - started, lr))))
             if val_accuracy > best_accuracy:
                 best_accuracy, best_epoch = val_accuracy, epoch
-            if epoch < config["training"]["epochs"]:
+            if scheduler is not None and epoch < config["training"]["epochs"]:
                 if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     scheduler.step(val_loss)
                 else:
@@ -925,8 +926,9 @@ def train_recipe(config, directory):
             if best_epoch == epoch:
                 save_checkpoint(directory / "best.pt", model, epoch, best_accuracy, config)
             write_history(directory, history)
-            print("Epoch {:3d}/100 train {:.4f}/{:.2%} val {:.4f}/{:.2%} lr {:.8g}".format(
-                epoch, train_loss, train_accuracy, val_loss, val_accuracy, lr), flush=True)
+            print("Epoch {:3d}/{} train {:.4f}/{:.2%} val {:.4f}/{:.2%} lr {:.8g}".format(
+                epoch, config["training"]["epochs"], train_loss, train_accuracy, val_loss,
+                val_accuracy, lr), flush=True)
         resources["total_training_wall_seconds"] = prior_wall + time.perf_counter() - wall_started
         update_resources(directory, resources, history, completed=True)
         del model, optimizer, scheduler, criterion, train_loader, val_loader
@@ -934,10 +936,16 @@ def train_recipe(config, directory):
         torch.cuda.empty_cache()
         write_json(directory / "status.json", {"status": "evaluating_best"})
         evaluate_best(directory, config)
+        output = config["output"]
+        if output["plot"]:
+            plot_results(directory)
         write_json(directory / "status.json", {
-            "status": "completed", "config_sha256": fingerprint(config), "epochs_completed": 100,
+            "status": "completed", "config_sha256": fingerprint(config),
+            "epochs_completed": config["training"]["epochs"],
             "best_epoch": best_epoch, "best_val_accuracy": best_accuracy,
-            "test_evaluation": "disabled", "cam": "disabled", "plotting": "disabled"})
+            "test_evaluation": "completed" if output["evaluate_test"] else "disabled",
+            "cam": "completed" if output["compute_cams"] else "disabled",
+            "plotting": "completed" if output["plot"] else "disabled"})
         return 0
     except KeyboardInterrupt:
         write_json(directory / "status.json", {"status": "interrupted", "reason": "User interruption",
@@ -953,7 +961,7 @@ def train_recipe(config, directory):
 
 
 def train(config, run_name):
-    if config.get("protocol") == PROTOCOL:
+    if is_resumable(config):
         directory = new_directory(config["output"]["results_root"], run_name)
         write_json(directory / "config.json", config)
         if not gpu_preflight(config, directory):
@@ -1004,7 +1012,10 @@ def train(config, run_name):
                     epoch, config["training"]["epochs"], train_loss, train_acc, val_loss, val_acc),
                     flush=True)
                 if scheduler is not None and epoch < config["training"]["epochs"]:
-                    scheduler.step()
+                    if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                        scheduler.step(val_loss)
+                    else:
+                        scheduler.step()
         del model, optimizer, train_loader, val_loader
         gc.collect()
         torch.cuda.empty_cache()

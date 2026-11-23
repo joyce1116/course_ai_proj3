@@ -6,19 +6,23 @@ import re
 import sys
 from pathlib import Path
 
+from recipes import FINAL_CONFIG, experiment_name, is_resumable
+
 
 ROOT = Path(__file__).resolve().parent
 
 
-def parser():
-    main = argparse.ArgumentParser(description="CIFAR-10 basic CifarCNN experiment")
+def parser(configuration=None):
+    main = argparse.ArgumentParser(description="CIFAR-10 complete CifarCNN model with RandAugment")
     commands = main.add_subparsers(dest="command", required=True)
     for name in ("check", "train", "test"):
         command = commands.add_parser(name)
         if name == "test":
             command.add_argument("--run-dir", type=Path, required=True)
+        elif configuration is None:
+            command.add_argument("--config", type=Path, default=FINAL_CONFIG)
         else:
-            command.add_argument("--config", type=Path, default=ROOT / "config" / "basic.json")
+            command.set_defaults(config=configuration)
         command.add_argument("--gpu", type=int)
         command.add_argument("--batch-size", type=int)
         command.add_argument("--num-workers", type=int)
@@ -29,13 +33,16 @@ def parser():
             command.add_argument("--epochs", type=int)
             command.add_argument("--lr", type=float)
             command.add_argument("--weight-decay", type=float)
-            command.add_argument("--run-name", default="cifarcnn")
+            command.add_argument("--run-name")
     plotting = commands.add_parser("plot")
     plotting.add_argument("--run-dir", type=Path, required=True)
     plotting.add_argument("--figures-dir", type=Path)
     plotting.add_argument("--split", choices=("val", "test"), default="test")
     download = commands.add_parser("download")
-    download.add_argument("--config", type=Path, default=ROOT / "config" / "basic.json")
+    if configuration is None:
+        download.add_argument("--config", type=Path, default=FINAL_CONFIG)
+    else:
+        download.set_defaults(config=configuration)
     download.add_argument("--data-dir", type=Path)
     download.set_defaults(no_download=False)
     return main
@@ -51,6 +58,10 @@ def load_config(args):
     for name in ("epochs", "batch_size", "lr", "weight_decay", "num_workers"):
         if getattr(args, name, None) is not None:
             config["training"][name] = getattr(args, name)
+    scheduler = config["training"].get("scheduler")
+    if getattr(args, "epochs", None) is not None and not is_resumable(config):
+        if scheduler and scheduler["name"] == "cosine":
+            scheduler["T_max"] = max(1, args.epochs - 1)
     if args.data_dir is not None:
         config["data"]["root"] = str(args.data_dir.resolve())
     if args.no_download:
@@ -94,7 +105,7 @@ def validate_config(config):
         raise ValueError("Expected ten classes and dropout in [0,1)")
     data = config["data"]
     if data["split_seed"] != 42 or data["val_size"] != 5000:
-        raise ValueError("The basic experiment fixes a stratified 45,000/5,000 split with seed 42")
+        raise ValueError("Use the shared stratified 45,000/5,000 split with seed 42")
     if data["mean"] != [0.5] * 3 or data["std"] != [0.5] * 3:
         raise ValueError("Expected mean/std (0.5,0.5,0.5)")
     integer(data["crop_padding"], "crop_padding", 0)
@@ -124,9 +135,9 @@ def validate_config(config):
         validate_recipe(config)
 
 
-def main():
-    argument_parser = parser()
-    args = argument_parser.parse_args()
+def main(argv=None, *, configuration=None):
+    argument_parser = parser(configuration)
+    args = argument_parser.parse_args(argv)
     try:
         if args.command == "plot":
             from visualization import plot_results
@@ -148,9 +159,10 @@ def main():
             return 0 if gpu_preflight(config, directory) else 2
         if args.command == "test":
             return test_only(args.run_dir, config)
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", args.run_name):
+        run_name = args.run_name or experiment_name(config)
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", run_name):
             argument_parser.error("run-name must contain 1-64 letters, digits, underscores or hyphens")
-        return train(config, args.run_name)
+        return train(config, run_name)
     except Exception as exc:
         print("Error: " + str(exc), file=sys.stderr, flush=True)
         return 1

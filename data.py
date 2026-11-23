@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset
 
+from recipes import LEGACY_PROTOCOL
+
 
 CLASSES = ("airplane", "automobile", "bird", "cat", "deer", "dog", "frog",
            "horse", "ship", "truck")
@@ -87,7 +89,7 @@ def stratified_split(targets, root, seed=42, val_size=5000, index_path=None):
             np.bincount(targets, minlength=10), np.full(10, 5000)):
         raise ValueError("Expected the balanced official 50,000-image training set")
     if seed != 42 or val_size != 5000:
-        raise ValueError("The basic experiment fixes split_seed=42 and val_size=5000")
+        raise ValueError("Use the shared split_seed=42 and val_size=5000")
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True)
     path = Path(index_path) if index_path is not None else root / "split_seed42.npz"
@@ -203,7 +205,7 @@ def training_data(config):
     train, val, split_info = stratified_split(
         train_data.targets, options["root"], options["split_seed"], options["val_size"],
         index_path=(Path(config["ablation"]["baseline_run"]) / "split_indices.npz"
-                    if config.get("protocol") == "n4-n28-v1" else None))
+                    if config.get("protocol") == LEGACY_PROTOCOL else None))
     return (make_loader(Subset(train_data, train.tolist()), config, training=True),
             make_loader(Subset(val_data, val.tolist()), config), split_info)
 
